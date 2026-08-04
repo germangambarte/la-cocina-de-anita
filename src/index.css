@@ -1,0 +1,25 @@
+@import "tailwindcss";
+/* 1. Define your default (Light Mode) variables */
+:root {
+  color-scheme: light dark; /* Tells the browser the site supports both modes */
+  --background: #ffffff;
+  --foreground: #09090b;
+}
+
+/* 2. Override variables when the user prefers Dark Mode */
+@media (prefers-color-scheme: dark) {
+  :root {
+  --background: #09090b;
+  --foreground: #fafafa;
+  }
+}
+
+/* 3. Apply the variables globally to your elements */
+body {
+  background-color: var(--background-color);
+  color: var(--text-color);
+  font-family: sans-serif;
+  transition: background-color 0.3s, color 0.3s; /* Smooth transition */
+}
+
+
