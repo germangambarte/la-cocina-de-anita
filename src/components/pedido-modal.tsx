@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useCreatePedido, useUpdatePedido } from "../hooks/usePedidos";
 import type { Pedido } from "../types/database";
+import { useMenuDelDia } from "../hooks/useMenudelDia";
 
 const PRECIO_REGULAR = 4500;
 const PRECIO_GRANDE = 7000;
@@ -18,6 +19,7 @@ export function PedidoModal({ pedidoAEditar, onClose }: Props) {
   const [hora, setHora] = useState("12:30");
   const [esDelivery, setEsDelivery] = useState(false);
   const [costoDelivery, setCostoDelivery] = useState(3000);
+  const { menuDelDia } = useMenuDelDia();
 
   const createMutation = useCreatePedido();
   const updateMutation = useUpdatePedido();
@@ -33,8 +35,7 @@ export function PedidoModal({ pedidoAEditar, onClose }: Props) {
       setEsDelivery(pedidoAEditar.es_delivery);
       setCostoDelivery(pedidoAEditar.costo_delivery);
     } else {
-      const menuGuardado =
-        localStorage.getItem("menu_del_dia") || "Menú del Día";
+      const menuGuardado = menuDelDia || "Menú del Día";
       setMenuNombre(menuGuardado);
     }
   }, [pedidoAEditar]);

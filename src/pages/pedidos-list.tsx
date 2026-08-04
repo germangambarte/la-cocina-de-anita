@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { usePedidos, useUpdatePedido } from "../hooks/usePedidos";
 import { PedidoCard } from "../components/pedido-card";
 import { PedidoModal } from "../components/pedido-modal";
@@ -6,9 +6,11 @@ import { GastoModal } from "../components/gasto-modal";
 import { BalanceView } from "../components/balance-view";
 import { useAuth } from "../context/auth-context";
 import type { Pedido, Gasto } from "../types/database";
+import { useMenuDelDia } from "../hooks/useMenudelDia";
 
 export function PedidosList() {
   const { data: pedidos, isLoading, isError } = usePedidos();
+  const { menuDelDia, actualizarMenu } = useMenuDelDia();
   const updateMutation = useUpdatePedido();
   const { logout } = useAuth();
 
@@ -20,15 +22,6 @@ export function PedidosList() {
   // Estados adicionales para la edicion de gastos:
   const [gastoAEditar, setGastoAEditar] = useState<Gasto | null>(null);
   const [showModalGasto, setShowModalGasto] = useState(false);
-
-  // Estado persistente del plato del día
-  const [menuDelDia, setMenuDelDia] = useState(() => {
-    return localStorage.getItem("menu_del_dia") || "Milanesas con Puré";
-  });
-
-  useEffect(() => {
-    localStorage.setItem("menu_del_dia", menuDelDia);
-  }, [menuDelDia]);
 
   const handleUpdate = (
     id: string,
@@ -54,6 +47,10 @@ export function PedidosList() {
   const pedidosEntregados = pedidos?.filter((p) => p.entregado) || [];
   const listaMostrar =
     tab === "pendientes" ? pedidosPendientes : pedidosEntregados;
+  const entregadosConDeuda = pedidosEntregados.filter(
+    (p) =>
+      p.metodo_pago === "pendiente" || (p.es_delivery && !p.delivery_pagado),
+  ).length;
 
   const totalViandasPendientes = pedidosPendientes.reduce(
     (acc, p) => acc + p.cantidad_regular + p.cantidad_grande,
@@ -128,12 +125,11 @@ export function PedidosList() {
           <input
             type="text"
             value={menuDelDia}
-            onChange={(e) => setMenuDelDia(e.target.value)}
+            onChange={(e) => actualizarMenu(e.target.value)}
             placeholder="Ej: Pastel de Papa"
             className="flex-1 bg-white border border-amber-300 rounded-lg px-3 py-1.5 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500"
           />
         </div>
-
         {/* Selector de Pantallas (Pedidos vs Balance) */}
         <div className="flex gap-2 border-t border-slate-100 pt-3">
           <button
@@ -185,10 +181,24 @@ export function PedidosList() {
                   : "text-slate-600 hover:text-slate-900"
               }`}
             >
-              <span>✅ Entregados</span>
-              <span className="text-xs px-2 py-0.5 rounded-full font-black bg-emerald-100 text-emerald-900">
-                {pedidosEntregados.length}
-              </span>
+              <div className="flex flex-col gap-2">
+                <div className="flex gap-2">
+                  <span>✅ Entregados</span>
+                  <span className="text-xs px-2 py-0.5 rounded-full font-black bg-emerald-100 text-emerald-900">
+                    {pedidosEntregados.length}
+                  </span>
+                </div>
+
+                {/* Badge de alerta si hay entregados que no pagaron aún */}
+                {entregadosConDeuda > 0 && (
+                  <span
+                    className="text-xs px-2 py-1 rounded-full font-black bg-red-600 text-white animate-pulse"
+                    title="Entregados con pagos o cadetería pendiente"
+                  >
+                  {entregadosConDeuda} por cobrar
+                  </span>
+                )}
+              </div>
             </button>
           </div>
 

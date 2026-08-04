@@ -1,31 +1,53 @@
 import { TimeRemainingBadge } from './time-remaining-badge';
-import type { Pedido, MetodoPago } from '../types/database';
 import { useDeletePedido } from '../hooks/usePedidos';
+import type { Pedido, MetodoPago } from '../types/database';
 
 interface Props {
   pedido: Pedido;
   onUpdate: (id: string, updates: Partial<Pedido>) => void;
-  onEdit: (pedido: Pedido) => void; // 👈 Callback para editar
+  onEdit: (pedido: Pedido) => void;
 }
 
 export function PedidoCard({ pedido, onUpdate, onEdit }: Props) {
   const deleteMutation = useDeletePedido();
 
-  const handleDelete = () => {
-    if (confirm(`¿Seguro que querés borrar el pedido de ${pedido.cliente_nombre}?`)) {
-      deleteMutation.mutate(pedido.id);
+  // Estados de deuda
+  const faltaCobrarCliente = pedido.metodo_pago === 'pendiente';
+  const faltaPagarDelivery = pedido.es_delivery && !pedido.delivery_pagado;
+  const tieneDeuda = faltaCobrarCliente || faltaPagarDelivery;
+
+  // Estilos según el estado real
+  const getCardStyle = () => {
+    if (!pedido.entregado) {
+      return 'border-slate-200 hover:border-amber-300 bg-white';
     }
+    // Si está entregado pero hay deudas pendientes:
+    if (tieneDeuda) {
+      return 'border-amber-400 bg-amber-50/30 shadow-xs';
+    }
+    // Entregado y 100% cerrado/saldado:
+    return 'border-slate-200 bg-slate-50/80 opacity-75';
   };
 
   return (
-    <div
-      className={`bg-white rounded-2xl border-2 p-5 shadow-xs transition-all relative ${
-        pedido.entregado
-          ? 'border-slate-200 bg-slate-50/80 opacity-80'
-          : 'border-slate-200 hover:border-amber-300'
-      }`}
-    >
-      {/* 1. ENCABEZADO: Cliente + Menú + Acciones rápidas (Editar / Borrar) */}
+    <div className={`bg-white rounded-2xl border-2 p-5 transition-all relative ${getCardStyle()}`}>
+      {/* 1. BADGES DE ALERTA PARA PEDIDOS ENTREGADOS CON DEUDA */}
+      {pedido.entregado && tieneDeuda && (
+        <div className="mb-3 flex flex-wrap gap-2">
+          {faltaCobrarCliente && (
+            <span className="bg-red-600 text-white font-black text-xs px-3 py-1 rounded-full shadow-xs flex items-center gap-1 animate-pulse">
+              ⚠️ Falta cobrar al cliente (${pedido.monto_total})
+            </span>
+          )}
+          {faltaPagarDelivery && (
+            <span className="bg-amber-500 text-slate-950 font-black text-xs px-3 py-1 rounded-full shadow-xs flex items-center gap-1">
+              🛵 Falta liquidar delivery (${pedido.costo_delivery})
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* ENCABEZADO Y DATOS DE LA TARJETA */}
       <div className="flex flex-wrap justify-between items-start gap-2 border-b border-slate-100 pb-3">
         <div>
           <span className="text-2xl font-black text-slate-800 tracking-tight block">
@@ -41,10 +63,8 @@ export function PedidoCard({ pedido, onUpdate, onEdit }: Props) {
           </div>
         </div>
 
-        {/* Botones de Edición / Borrado + Badge de Tiempo */}
         <div className="flex items-center gap-2">
           <TimeRemainingBadge horaEntrega={pedido.hora_entrega} entregado={pedido.entregado} />
-          
           <button
             onClick={() => onEdit(pedido)}
             title="Editar pedido"
@@ -53,7 +73,11 @@ export function PedidoCard({ pedido, onUpdate, onEdit }: Props) {
             ✏️
           </button>
           <button
-            onClick={handleDelete}
+            onClick={() => {
+              if (confirm(`¿Borrar el pedido de ${pedido.cliente_nombre}?`)) {
+                deleteMutation.mutate(pedido.id);
+              }
+            }}
             disabled={deleteMutation.isPending}
             title="Eliminar pedido"
             className="p-1.5 rounded-lg border border-red-200 hover:bg-red-50 text-red-600 text-xs font-bold cursor-pointer"
@@ -63,7 +87,7 @@ export function PedidoCard({ pedido, onUpdate, onEdit }: Props) {
         </div>
       </div>
 
-      {/* Resto de la PedidoCard (Viandas, Modalidad, Estado de Pago, etc. se mantiene igual) */}
+      {/* VIANDAS Y PRECIOS */}
       <div className="py-3.5">
         <div className="flex flex-wrap gap-2.5">
           {pedido.cantidad_regular > 0 && (
@@ -89,26 +113,29 @@ export function PedidoCard({ pedido, onUpdate, onEdit }: Props) {
       <div className="flex flex-wrap justify-between items-center gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100 mb-4">
         <div>
           {pedido.es_delivery ? (
-            <div className="flex items-center gap-2 text-blue-700 font-bold text-base">
-              <span className="text-xl">🛵</span>
-              <span>Delivery (+${pedido.costo_delivery})</span>
+            <div className="flex items-center gap-2 text-blue-700 font-bold text-sm">
+              <span className="text-lg">🛵</span>
+              <span>Envío: ${pedido.costo_delivery}</span>
             </div>
           ) : (
-            <div className="flex items-center gap-2 text-emerald-700 font-bold text-base">
-              <span className="text-xl">🏪</span>
+            <div className="flex items-center gap-2 text-emerald-700 font-bold text-sm">
+              <span className="text-lg">🏪</span>
               <span>Retira en local</span>
             </div>
           )}
         </div>
 
         <div className="text-right">
-          <span className="text-xs text-slate-400 block font-semibold">Total a cobrar</span>
-          <span className="text-2xl font-black text-slate-900">
+          <span className="text-xs text-slate-400 block font-semibold">
+            {pedido.es_delivery ? `Comida: $${pedido.monto_total - pedido.costo_delivery}` : ''}
+          </span>
+          <span className="text-xl font-black text-slate-900">
             ${pedido.monto_total.toLocaleString()}
           </span>
         </div>
       </div>
 
+      {/* CONTROLES DE PAGO Y ESTADO */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
         <div className="flex flex-col">
           <label className="text-[11px] font-bold text-slate-400 uppercase mb-1">
@@ -121,7 +148,7 @@ export function PedidoCard({ pedido, onUpdate, onEdit }: Props) {
             }
             className={`w-full p-2.5 rounded-xl font-bold text-sm border-2 cursor-pointer transition ${
               pedido.metodo_pago === 'pendiente'
-                ? 'bg-red-50 border-red-300 text-red-700'
+                ? 'bg-red-50 border-red-400 text-red-700 font-black'
                 : pedido.metodo_pago === 'efectivo'
                 ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
                 : 'bg-indigo-50 border-indigo-300 text-indigo-800'
@@ -136,7 +163,7 @@ export function PedidoCard({ pedido, onUpdate, onEdit }: Props) {
         {pedido.es_delivery ? (
           <div className="flex flex-col">
             <label className="text-[11px] font-bold text-slate-400 uppercase mb-1">
-              Pago al Cadete
+              Pago al Delivery
             </label>
             <button
               onClick={() =>
@@ -145,10 +172,10 @@ export function PedidoCard({ pedido, onUpdate, onEdit }: Props) {
               className={`w-full p-2.5 rounded-xl font-bold text-sm border-2 transition cursor-pointer flex items-center justify-center gap-1.5 ${
                 pedido.delivery_pagado
                   ? 'bg-emerald-100 border-emerald-400 text-emerald-800'
-                  : 'bg-amber-100 border-amber-400 text-amber-900 animate-pulse'
+                  : 'bg-amber-100 border-amber-400 text-amber-900 font-black'
               }`}
             >
-              {pedido.delivery_pagado ? '✅ Cadete Pagado' : '⚠️ Debe al Cadete'}
+              {pedido.delivery_pagado ? '✅ Delivery Pagado' : '⚠️ Debe al Delivery'}
             </button>
           </div>
         ) : (
@@ -157,7 +184,7 @@ export function PedidoCard({ pedido, onUpdate, onEdit }: Props) {
 
         <div className="flex flex-col">
           <label className="text-[11px] font-bold text-slate-400 uppercase mb-1">
-            Acción
+            Estado
           </label>
           <button
             onClick={() => onUpdate(pedido.id, { entregado: !pedido.entregado })}
@@ -174,3 +201,4 @@ export function PedidoCard({ pedido, onUpdate, onEdit }: Props) {
     </div>
   );
 }
+
