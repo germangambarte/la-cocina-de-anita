@@ -1,54 +1,71 @@
-import { useState } from 'react';
-import { useGastos, useDeleteGasto } from '../hooks/useGastos';
-import type { Pedido, Gasto } from '../types/database';
+import { useState } from "react";
+import { useGastos, useDeleteGasto } from "../hooks/useGastos";
+import type { Pedido, Gasto } from "../types/database";
 
 interface Props {
   pedidos: Pedido[];
   onEditGasto: (gasto: Gasto) => void; // 👈 Recibimos la función de edicion
 }
 
-type Periodo = 'dia' | 'semana' | 'mes';
+type Periodo = "dia" | "semana" | "mes";
+
+const getLocalDateString = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
 
 export function BalanceView({ pedidos, onEditGasto }: Props) {
-  const { data: gastos = [], isLoading } = useGastos();
   const deleteGasto = useDeleteGasto();
-  const [periodo, setPeriodo] = useState<Periodo>('dia');
+  const { data: gastos = [], isLoading } = useGastos();
+  const [periodo, setPeriodo] = useState<Periodo>("dia");
 
   if (isLoading)
-    return <div className="p-4 text-center font-bold text-slate-500">Calculando balance...</div>;
+    return (
+      <div className="p-4 text-center font-bold text-slate-500">
+        Calculando balance...
+      </div>
+    );
 
-  const ahora = new Date();
+  const hoyStr = getLocalDateString(new Date());
 
   const esDelPeriodo = (fechaStr: string) => {
-    const fechaObj = new Date(fechaStr);
+    // Si la fecha viene en formato YYYY-MM-DD
+    const fechaLimpia = fechaStr.split("T")[0];
 
-    if (periodo === 'dia') {
-      return fechaObj.toDateString() === ahora.toDateString();
+    if (periodo === "dia") {
+      return fechaLimpia === hoyStr;
     }
 
-    if (periodo === 'semana') {
-      const sieteDiasAtras = new Date();
-      sieteDiasAtras.setDate(ahora.getDate() - 7);
-      return fechaObj >= sieteDiasAtras;
+    if (periodo === "semana") {
+      const limiteSemana = new Date();
+      limiteSemana.setDate(limiteSemana.getDate() - 7);
+      const limiteStr = getLocalDateString(limiteSemana);
+      return fechaLimpia >= limiteStr;
     }
 
-    if (periodo === 'mes') {
-      return (
-        fechaObj.getMonth() === ahora.getMonth() &&
-        fechaObj.getFullYear() === ahora.getFullYear()
-      );
+    if (periodo === "mes") {
+      const [yearGasto, monthGasto] = fechaLimpia.split("-");
+      const ahora = new Date();
+      const yearActual = String(ahora.getFullYear());
+      const monthActual = String(ahora.getMonth() + 1).padStart(2, "0");
+
+      return yearGasto === yearActual && monthGasto === monthActual;
     }
 
     return true;
   };
-
   const pedidosFiltrados = pedidos.filter(
-    (p) => p.metodo_pago !== 'pendiente' && esDelPeriodo(p.created_at)
+    (p) => p.metodo_pago !== "pendiente" && esDelPeriodo(p.created_at),
   );
 
   const gastosFiltrados = gastos.filter((g) => esDelPeriodo(g.fecha));
 
-  const ingresosTotales = pedidosFiltrados.reduce((acc, p) => acc + p.monto_total, 0);
+  const ingresosTotales = pedidosFiltrados.reduce(
+    (acc, p) => acc + p.monto_total,
+    0,
+  );
   const egresosTotales = gastosFiltrados.reduce((acc, g) => acc + g.monto, 0);
   const gananciaNeta = ingresosTotales - egresosTotales;
 
@@ -63,25 +80,31 @@ export function BalanceView({ pedidos, onEditGasto }: Props) {
       {/* Selector de Período */}
       <div className="flex justify-center gap-2 bg-white p-2 rounded-2xl border border-slate-200">
         <button
-          onClick={() => setPeriodo('dia')}
+          onClick={() => setPeriodo("dia")}
           className={`px-4 py-2 rounded-xl font-bold text-xs cursor-pointer transition ${
-            periodo === 'dia' ? 'bg-amber-600 text-white' : 'text-slate-600 hover:bg-slate-100'
+            periodo === "dia"
+              ? "bg-amber-600 text-white"
+              : "text-slate-600 hover:bg-slate-100"
           }`}
         >
           Hoy
         </button>
         <button
-          onClick={() => setPeriodo('semana')}
+          onClick={() => setPeriodo("semana")}
           className={`px-4 py-2 rounded-xl font-bold text-xs cursor-pointer transition ${
-            periodo === 'semana' ? 'bg-amber-600 text-white' : 'text-slate-600 hover:bg-slate-100'
+            periodo === "semana"
+              ? "bg-amber-600 text-white"
+              : "text-slate-600 hover:bg-slate-100"
           }`}
         >
           Últimos 7 Días
         </button>
         <button
-          onClick={() => setPeriodo('mes')}
+          onClick={() => setPeriodo("mes")}
           className={`px-4 py-2 rounded-xl font-bold text-xs cursor-pointer transition ${
-            periodo === 'mes' ? 'bg-amber-600 text-white' : 'text-slate-600 hover:bg-slate-100'
+            periodo === "mes"
+              ? "bg-amber-600 text-white"
+              : "text-slate-600 hover:bg-slate-100"
           }`}
         >
           Este Mes
@@ -117,8 +140,8 @@ export function BalanceView({ pedidos, onEditGasto }: Props) {
         <div
           className={`border p-4 rounded-2xl ${
             gananciaNeta >= 0
-              ? 'bg-slate-900 border-slate-900 text-white'
-              : 'bg-red-950 border-red-900 text-red-100'
+              ? "bg-slate-900 border-slate-900 text-white"
+              : "bg-red-950 border-red-900 text-red-100"
           }`}
         >
           <span className="text-xs font-bold text-slate-400 uppercase block mb-1">
@@ -128,14 +151,16 @@ export function BalanceView({ pedidos, onEditGasto }: Props) {
             ${gananciaNeta.toLocaleString()}
           </span>
           <span className="text-[11px] font-semibold text-slate-400 block mt-1">
-            {gananciaNeta >= 0 ? 'Resultado positivo' : 'Déficit en el período'}
+            {gananciaNeta >= 0 ? "Resultado positivo" : "Déficit en el período"}
           </span>
         </div>
       </div>
 
       {/* Historial Reciente de Gastos con Botones de Edición */}
       <div className="bg-white p-5 rounded-2xl border border-slate-200 space-y-3">
-        <h3 className="text-base font-bold text-slate-800">Últimas Compras de Insumos</h3>
+        <h3 className="text-base font-bold text-slate-800">
+          Últimas Compras de Insumos
+        </h3>
 
         {gastosFiltrados.length === 0 ? (
           <p className="text-sm font-medium text-slate-400 text-center py-6">
@@ -144,11 +169,16 @@ export function BalanceView({ pedidos, onEditGasto }: Props) {
         ) : (
           <div className="divide-y divide-slate-100">
             {gastosFiltrados.map((g) => (
-              <div key={g.id} className="py-3 flex justify-between items-center text-sm">
+              <div
+                key={g.id}
+                className="py-3 flex justify-between items-center text-sm"
+              >
                 <div>
-                  <span className="font-bold text-slate-800 block">{g.concepto}</span>
+                  <span className="font-bold text-slate-800 block">
+                    {g.concepto}
+                  </span>
                   <span className="text-xs text-slate-400 font-semibold">
-                    {g.fecha} • {g.categoria.replace('_', ' ')}
+                    {g.fecha} • {g.categoria.replace("_", " ")}
                   </span>
                 </div>
 
