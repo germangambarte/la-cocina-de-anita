@@ -149,17 +149,24 @@ export function PedidosList() {
       })
       .join("\n");
 
-    const totalARendirACocina = pedidosParaWhatsapp.reduce(
-      (acc, p) => acc + (p.monto_total - p.costo_delivery),
-      0,
+    const { totalARendir, totalParaDelivery } = pedidosParaWhatsapp.reduce(
+      (acc, p) => {
+        // Caso 1: El local NO le pagó al delivery.
+        // El repartidor cobra el total, se queda con su parte y rinde la diferencia.
+        if (!p.delivery_pagado) {
+          acc.totalARendir += p.monto_total - p.costo_delivery;
+          acc.totalParaDelivery += p.costo_delivery;
+        } else {
+          // Caso 2: El local YA le pagó al delivery (ej. por adelantado).
+          // El repartidor cobra el total al cliente y debe rendir el 100% al local.
+          acc.totalARendir += p.monto_total;
+        }
+        return acc;
+      },
+      { totalARendir: 0, totalParaDelivery: 0 },
     );
 
-    const totalDelivery = pedidosParaWhatsapp.reduce(
-      (acc, p) => acc + p.costo_delivery,
-      0,
-    );
-
-    const mensaje = `Jose, le paso los pedidos que quedan pendientes\n\n${detallePedidos}\n--------------------------------\n\n*TOTAL VIANDAS:* $${totalARendirACocina.toLocaleString()}\n*TOTAL SUYO:* $${totalDelivery.toLocaleString()}`;
+    const mensaje = `José, le paso los pagos pendientes:\n\n${detallePedidos}\n\n--------------------------------\n\n*TOTAL VIANDAS:* $${totalARendir.toLocaleString()}\n*PARA SUYO:* $${totalParaDelivery.toLocaleString()}`;
 
     const urlWhatsapp = `https://api.whatsapp.com/send?text=${encodeURIComponent(
       mensaje,
