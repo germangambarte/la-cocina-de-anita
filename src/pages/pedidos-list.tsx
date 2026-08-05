@@ -96,6 +96,61 @@ export function PedidosList() {
     setShowModalGasto(false);
   };
 
+  const handleEnviarWhatsapp = () => {
+    const pedidosParaWhatsapp =
+      pedidos?.filter(
+        (p) => p.es_delivery && p.metodo_pago === "pendiente",
+      ) || [];
+
+    if (pedidosParaWhatsapp.length === 0) {
+      alert("No hay pedidos de delivery pendientes de cobro para enviar.");
+      return;
+    }
+
+    // Contamos cuántas veces aparece cada cliente
+    const nameCounts = pedidosParaWhatsapp.reduce(
+      (acc, p) => {
+        const name = p.cliente_nombre.trim();
+        acc[name] = (acc[name] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
+
+    const detallePedidos = pedidosParaWhatsapp
+      .map((p) => {
+        const subtotalComida = p.monto_total - p.costo_delivery;
+        const nombreCliente = p.cliente_nombre.trim();
+        let lineaPedido = `- *${nombreCliente}*: $${subtotalComida.toLocaleString()}`;
+
+        // Si el cliente tiene más de un pedido, agregamos la fecha
+        if (nameCounts[nombreCliente] > 1) {
+          const fecha = new Date(p.created_at);
+          const fechaFormateada = `(${fecha.getDate().toString().padStart(2, "0")}/${(fecha.getMonth() + 1).toString().padStart(2, "0")})`;
+          lineaPedido += ` ${fechaFormateada}`;
+        }
+        return lineaPedido;
+      })
+      .join("\n");
+
+    const totalARendirACocina = pedidosParaWhatsapp.reduce(
+      (acc, p) => acc + (p.monto_total - p.costo_delivery),
+      0,
+    );
+
+    const totalDelivery = pedidosParaWhatsapp.reduce(
+      (acc, p) => acc + p.costo_delivery,
+      0,
+    );
+
+    const mensaje = `:Jose, le paso los pedidos que quedan pendientes\n\n${detallePedidos}\n--------------------------------\n\n*TOTAL VIANDAS:* $${totalARendirACocina.toLocaleString()}\n*TOTAL SUYO:* $${totalDelivery.toLocaleString()}`;
+
+    const urlWhatsapp = `https://api.whatsapp.com/send?text=${encodeURIComponent(
+      mensaje,
+    )}`;
+    window.open(urlWhatsapp, "_blank");
+  };
+
   return (
     <div className="max-w-4xl mx-auto p-4 space-y-5">
       {/* Encabezado Principal */}
@@ -125,6 +180,12 @@ export function PedidosList() {
               className="bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-sm px-4 py-2.5 rounded-xl transition shadow-xs cursor-pointer active:scale-95"
             >
               💸 Cargar Gasto
+            </button>
+            <button
+              onClick={handleEnviarWhatsapp}
+              className="bg-green-600 hover:bg-green-700 text-white font-extrabold text-sm px-4 py-2.5 rounded-xl transition shadow-xs cursor-pointer active:scale-95"
+            >
+              💬 Enviar a Delivery
             </button>
             <button
               onClick={logout}
