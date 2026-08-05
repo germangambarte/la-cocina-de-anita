@@ -159,7 +159,7 @@ export function PedidosList() {
       0,
     );
 
-    const mensaje = `:Jose, le paso los pedidos que quedan pendientes\n\n${detallePedidos}\n--------------------------------\n\n*TOTAL VIANDAS:* $${totalARendirACocina.toLocaleString()}\n*TOTAL SUYO:* $${totalDelivery.toLocaleString()}`;
+    const mensaje = `Jose, le paso los pedidos que quedan pendientes\n\n${detallePedidos}\n--------------------------------\n\n*TOTAL VIANDAS:* $${totalARendirACocina.toLocaleString()}\n*TOTAL SUYO:* $${totalDelivery.toLocaleString()}`;
 
     const urlWhatsapp = `https://api.whatsapp.com/send?text=${encodeURIComponent(
       mensaje,
