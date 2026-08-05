@@ -1,0 +1,55 @@
+import { useState, useEffect } from 'react';
+import { useMenuDelDia } from '../hooks/useMenuDelDia.ts';
+
+export function MenuDelDiaInput() {
+  const { menuDelDia, actualizarMenu, isUpdating } = useMenuDelDia();
+  const [texto, setTexto] = useState('');
+  const [editado, setEditado] = useState(false);
+
+  // Inicializar solo cuando se reciben datos por primera vez
+  useEffect(() => {
+    if (!editado) {
+      setTexto(menuDelDia);
+    }
+  }, [menuDelDia, editado]);
+
+  const handleGuardar = () => {
+    actualizarMenu(texto);
+    setEditado(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleGuardar();
+    }
+  };
+
+  return (
+    <div className="bg-amber-50/70 p-3 rounded-xl border border-amber-200/80 flex flex-wrap items-center gap-2">
+      <span className="text-xs font-black uppercase text-amber-900 tracking-wider">
+        🍲 Menú del Día:
+      </span>
+      <input
+        type="text"
+        value={texto}
+        onChange={(e) => {
+          setTexto(e.target.value);
+          setEditado(true);
+        }}
+        onKeyDown={handleKeyDown}
+        placeholder="Ej: Pastel de Papa"
+        className="flex-1 min-w-[200px] bg-white border border-amber-300 rounded-lg px-3 py-1.5 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500"
+      />
+
+      {editado && (
+        <button
+          onClick={handleGuardar}
+          disabled={isUpdating}
+          className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-black px-3 py-1.5 rounded-lg transition shadow-xs cursor-pointer active:scale-95"
+        >
+          {isUpdating ? 'Guardando...' : '💾 Guardar'}
+        </button>
+      )}
+    </div>
+  );
+}

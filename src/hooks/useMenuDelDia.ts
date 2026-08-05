@@ -4,7 +4,6 @@ import { supabase } from '../lib/supabase';
 export function useMenuDelDia() {
   const queryClient = useQueryClient();
 
-  // Leer menú actual desde Supabase
   const query = useQuery({
     queryKey: ['configuracion', 'menu_del_dia'],
     queryFn: async () => {
@@ -12,20 +11,18 @@ export function useMenuDelDia() {
         .from('configuracion')
         .select('valor')
         .eq('clave', 'menu_del_dia')
-        .single();
+        .maybeSingle();
 
       if (error) throw new Error(error.message);
-      return data?.valor || 'Menú del Día';
+      return data?.valor ?? '';
     },
-    refetchInterval: 30000, // Reconsultar cada 30 segundos automáticamente
   });
 
-  // Modificar el menú en Supabase
   const mutation = useMutation({
     mutationFn: async (nuevoMenu: string) => {
       const { error } = await supabase
         .from('configuracion')
-        .upsert({ clave: 'menu_del_dia', valor: nuevoMenu });
+        .upsert({ clave: 'menu_del_dia', valor: nuevoMenu.trim() });
 
       if (error) throw new Error(error.message);
     },
@@ -35,7 +32,7 @@ export function useMenuDelDia() {
   });
 
   return {
-    menuDelDia: query.data || 'Cargando menú...',
+    menuDelDia: query.data ?? '',
     isLoading: query.isLoading,
     actualizarMenu: mutation.mutate,
     isUpdating: mutation.isPending,

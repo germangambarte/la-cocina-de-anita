@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { usePedidos, useUpdatePedido } from "../hooks/usePedidos";
 import { PedidoCard } from "../components/pedido-card";
 import { PedidoModal } from "../components/pedido-modal";
@@ -6,11 +6,13 @@ import { GastoModal } from "../components/gasto-modal";
 import { BalanceView } from "../components/balance-view";
 import { useAuth } from "../context/auth-context";
 import type { Pedido, Gasto } from "../types/database";
-import { useMenuDelDia } from "../hooks/useMenudelDia";
+import { useMenuDelDia } from "../hooks/useMenuDelDia";
+import { MenuDelDiaInput } from "../components/menu-del-dia-input";
 
 export function PedidosList() {
   const { data: pedidos, isLoading, isError } = usePedidos();
   const { menuDelDia, actualizarMenu } = useMenuDelDia();
+  const [textoMenu, setTextoMenu] = useState(menuDelDia);
   const updateMutation = useUpdatePedido();
   const { logout } = useAuth();
 
@@ -22,6 +24,23 @@ export function PedidosList() {
   // Estados adicionales para la edicion de gastos:
   const [gastoAEditar, setGastoAEditar] = useState<Gasto | null>(null);
   const [showModalGasto, setShowModalGasto] = useState(false);
+
+  // Sincronizar el input local cuando cambie el menú en la base de datos
+  useEffect(() => {
+    setTextoMenu(menuDelDia);
+  }, [menuDelDia]);
+
+  // Debounce: enviar a Supabase solo tras 600ms de inactividad al tipear
+  useEffect(() => {
+    // Si el texto local es idéntico al de la DB, no hacemos nada
+    if (textoMenu === menuDelDia) return;
+
+    const timer = setTimeout(() => {
+      actualizarMenu(textoMenu);
+    }, 600);
+
+    return () => clearTimeout(timer);
+  }, [textoMenu, menuDelDia, actualizarMenu]);
 
   const handleUpdate = (
     id: string,
@@ -118,18 +137,7 @@ export function PedidosList() {
         </div>
 
         {/* Input Persistente del Menú del Día */}
-        <div className="bg-amber-50/70 p-3 rounded-xl border border-amber-200/80 flex flex-wrap items-center gap-3">
-          <span className="text-xs font-black uppercase text-amber-900 tracking-wider">
-            🍲 Menú del Día:
-          </span>
-          <input
-            type="text"
-            value={menuDelDia}
-            onChange={(e) => actualizarMenu(e.target.value)}
-            placeholder="Ej: Pastel de Papa"
-            className="flex-1 bg-white border border-amber-300 rounded-lg px-3 py-1.5 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500"
-          />
-        </div>
+        <MenuDelDiaInput />
         {/* Selector de Pantallas (Pedidos vs Balance) */}
         <div className="flex gap-2 border-t border-slate-100 pt-3">
           <button
@@ -195,7 +203,7 @@ export function PedidosList() {
                     className="text-xs px-2 py-1 rounded-full font-black bg-red-600 text-white animate-pulse"
                     title="Entregados con pagos o cadetería pendiente"
                   >
-                  {entregadosConDeuda} por cobrar
+                    {entregadosConDeuda} por cobrar
                   </span>
                 )}
               </div>

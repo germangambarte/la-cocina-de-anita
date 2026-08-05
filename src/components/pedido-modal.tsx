@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useCreatePedido, useUpdatePedido } from "../hooks/usePedidos";
 import type { Pedido } from "../types/database";
-import { useMenuDelDia } from "../hooks/useMenudelDia";
+import { useMenuDelDia } from "../hooks/useMenuDelDia";
 
 const PRECIO_REGULAR = 4500;
 const PRECIO_GRANDE = 7000;
