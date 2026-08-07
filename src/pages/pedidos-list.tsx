@@ -70,7 +70,17 @@ export function PedidosList() {
           p.metodo_pago === "pendiente" || (p.es_delivery && !p.delivery_pagado);
         return esDeHoy || tieneDeuda;
       }) || []
-    ).sort((a, b) => a.hora_entrega.localeCompare(b.hora_entrega));
+    ).sort((a, b) => {
+      const aTieneDeuda =
+        a.metodo_pago === "pendiente" || (a.es_delivery && !a.delivery_pagado);
+      const bTieneDeuda =
+        b.metodo_pago === "pendiente" || (b.es_delivery && !b.delivery_pagado);
+
+      if (aTieneDeuda !== bTieneDeuda) {
+        return aTieneDeuda ? -1 : 1;
+      }
+      return a.hora_entrega.localeCompare(b.hora_entrega);
+    });
 
     return [pendientes, entregados];
   }, [pedidos, hoyStr]);

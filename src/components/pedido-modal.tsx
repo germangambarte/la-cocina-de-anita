@@ -28,7 +28,7 @@ export function PedidoModal({ pedidoAEditar, onClose }: Props) {
   // Pestaña 2: Milanesas / Por Kilo
   const [nombreProductoKilo, setNombreProductoKilo] = useState("Milanesas de Pollo");
   const [cantKilos, setCantKilos] = useState<number | "">(1);
-  const [precioKilo, setPrecioKilo] = useState<number | "">(8000);
+  const [precioKilo, setPrecioKilo] = useState<number | "">(7000);
 
   // Opción general: Sobrescribir precio final a mano
   const [usarPrecioManual, setUsarPrecioManual] = useState(false);
