@@ -26,8 +26,8 @@ export function PedidoModal({ pedidoAEditar, onClose }: Props) {
   const [precioGrande, setPrecioGrande] = useState<number | "">(7000);
 
   // Pestaña 2: Milanesas / Por Kilo
-  const [nombreProductoKilo, setNombreProductoKilo] = useState("Milanesas de Pollo");
-  const [cantKilos, setCantKilos] = useState<number | "">(1);
+  const [nombreProductoKilo, setNombreProductoKilo] =
+    useState("Milanesas de Pollo");
   const [precioKilo, setPrecioKilo] = useState<number | "">(7000);
 
   // Opción general: Sobrescribir precio final a mano
@@ -46,16 +46,22 @@ export function PedidoModal({ pedidoAEditar, onClose }: Props) {
       setEsDelivery(pedidoAEditar.es_delivery);
       setCostoDelivery(pedidoAEditar.costo_delivery);
 
-      if (pedidoAEditar.cantidad_regular > 0 || pedidoAEditar.cantidad_grande > 0) {
+      if (
+        pedidoAEditar.cantidad_regular > 0 ||
+        pedidoAEditar.cantidad_grande > 0
+      ) {
         setTipoTab("vianda");
         setMenuNombre(pedidoAEditar.menu_nombre);
         setCantRegular(pedidoAEditar.cantidad_regular);
         setCantGrande(pedidoAEditar.cantidad_grande);
       } else {
         setTipoTab("kilo");
-        setNombreProductoKilo(pedidoAEditar.menu_nombre || "Milanesas de Pollo");
+        setNombreProductoKilo(
+          pedidoAEditar.menu_nombre || "Milanesas de Pollo",
+        );
         setUsarPrecioManual(true);
-        const subtotalComida = pedidoAEditar.monto_total - pedidoAEditar.costo_delivery;
+        const subtotalComida =
+          pedidoAEditar.monto_total - pedidoAEditar.costo_delivery;
         setPrecioManualComida(subtotalComida);
       }
     } else {
@@ -69,14 +75,16 @@ export function PedidoModal({ pedidoAEditar, onClose }: Props) {
     cantRegular * (Number(precioRegular) || 0) +
     cantGrande * (Number(precioGrande) || 0);
 
-  const subtotalKilos = (Number(cantKilos) || 0) * (Number(precioKilo) || 0);
+  const subtotalKilos = Number(precioKilo) || 0;
 
-  const subtotalCalculadoTab = tipoTab === "vianda" ? subtotalViandas : subtotalKilos;
+  const subtotalCalculadoTab =
+    tipoTab === "vianda" ? subtotalViandas : subtotalKilos;
   const subtotalComidaFinal = usarPrecioManual
-    ? (Number(precioManualComida) || 0)
+    ? Number(precioManualComida) || 0
     : subtotalCalculadoTab;
 
-  const totalGeneral = subtotalComidaFinal + (esDelivery ? Number(costoDelivery) : 0);
+  const totalGeneral =
+    subtotalComidaFinal + (esDelivery ? Number(costoDelivery) : 0);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,7 +95,9 @@ export function PedidoModal({ pedidoAEditar, onClose }: Props) {
     }
 
     if (totalGeneral <= 0 && !usarPrecioManual) {
-      alert("El pedido debe tener viandas, kilos cargados o un monto mayor a $0.");
+      alert(
+        "El pedido debe tener viandas, kilos cargados o un monto mayor a $0.",
+      );
       return;
     }
 
@@ -100,7 +110,7 @@ export function PedidoModal({ pedidoAEditar, onClose }: Props) {
       regFinal = cantRegular;
       grandeFinal = cantGrande;
     } else {
-      nombreFinal = `${cantKilos || 1}kg ${nombreProductoKilo.trim() || "Milanesas de Pollo"}`;
+      nombreFinal = `${nombreProductoKilo.trim() || "Milanesas de Pollo"}`;
       regFinal = 0;
       grandeFinal = 0;
     }
@@ -120,7 +130,7 @@ export function PedidoModal({ pedidoAEditar, onClose }: Props) {
             monto_total: totalGeneral,
           },
         },
-        { onSuccess: () => onClose() }
+        { onSuccess: () => onClose() },
       );
     } else {
       createMutation.mutate(
@@ -137,7 +147,7 @@ export function PedidoModal({ pedidoAEditar, onClose }: Props) {
           delivery_pagado: false,
           entregado: false,
         },
-        { onSuccess: () => onClose() }
+        { onSuccess: () => onClose() },
       );
     }
   };
@@ -232,7 +242,11 @@ export function PedidoModal({ pedidoAEditar, onClose }: Props) {
                       type="number"
                       step="100"
                       value={precioRegular}
-                      onChange={(e) => setPrecioRegular(e.target.value === "" ? "" : Number(e.target.value))}
+                      onChange={(e) =>
+                        setPrecioRegular(
+                          e.target.value === "" ? "" : Number(e.target.value),
+                        )
+                      }
                       className="w-20 bg-white border border-sky-300 rounded-lg p-1 text-center font-black text-sky-950"
                     />
                   </div>
@@ -271,7 +285,11 @@ export function PedidoModal({ pedidoAEditar, onClose }: Props) {
                       type="number"
                       step="100"
                       value={precioGrande}
-                      onChange={(e) => setPrecioGrande(e.target.value === "" ? "" : Number(e.target.value))}
+                      onChange={(e) =>
+                        setPrecioGrande(
+                          e.target.value === "" ? "" : Number(e.target.value),
+                        )
+                      }
                       className="w-20 bg-white border border-orange-300 rounded-lg p-1 text-center font-black text-orange-950"
                     />
                   </div>
@@ -317,48 +335,52 @@ export function PedidoModal({ pedidoAEditar, onClose }: Props) {
               </div>
 
               {/* Botones rápidos de Kilos para mamá */}
-              <div>
-                <label className="block text-xs font-black text-amber-900 uppercase mb-1">
-                  Cantidad de Kilos
-                </label>
-                <div className="flex gap-2 mb-2">
-                  {[0.5, 1, 1.5, 2].map((k) => (
-                    <button
-                      key={k}
-                      type="button"
-                      onClick={() => setCantKilos(k)}
-                      className={`flex-1 py-2 rounded-xl font-black text-xs border cursor-pointer ${
-                        cantKilos === k
-                          ? "bg-amber-600 text-white border-amber-700 shadow-xs"
-                          : "bg-white text-amber-950 border-amber-300 hover:bg-amber-100"
-                      }`}
-                    >
-                      {k} kg
-                    </button>
-                  ))}
-                </div>
-
-                <input
-                  type="number"
-                  step="0.1"
-                  min="0.1"
-                  placeholder="Cantidad a mano (ej: 1.25)"
-                  value={cantKilos}
-                  onChange={(e) => setCantKilos(e.target.value === "" ? "" : Number(e.target.value))}
-                  className="w-full bg-white border-2 border-amber-300 rounded-xl p-3 text-center text-xl font-black text-amber-950"
-                />
-              </div>
+              {/* <div> */}
+              {/*   <label className="block text-xs font-black text-amber-900 uppercase mb-1"> */}
+              {/*     Cantidad de Kilos */}
+              {/*   </label> */}
+              {/*   <div className="flex gap-2 mb-2"> */}
+              {/*     {[0.5, 1, 1.5, 2].map((k) => ( */}
+              {/*       <button */}
+              {/*         key={k} */}
+              {/*         type="button" */}
+              {/*         onClick={() => setCantKilos(k)} */}
+              {/*         className={`flex-1 py-2 rounded-xl font-black text-xs border cursor-pointer ${ */}
+              {/*           cantKilos === k */}
+              {/*             ? "bg-amber-600 text-white border-amber-700 shadow-xs" */}
+              {/*             : "bg-white text-amber-950 border-amber-300 hover:bg-amber-100" */}
+              {/*         }`} */}
+              {/*       > */}
+              {/*         {k} kg */}
+              {/*       </button> */}
+              {/*     ))} */}
+              {/*   </div> */}
+              {/**/}
+              {/*   <input */}
+              {/*     type="number" */}
+              {/*     step="0.1" */}
+              {/*     min="0.1" */}
+              {/*     placeholder="Cantidad a mano (ej: 1.25)" */}
+              {/*     value={cantKilos} */}
+              {/*     onChange={(e) => setCantKilos(e.target.value === "" ? "" : Number(e.target.value))} */}
+              {/*     className="w-full bg-white border-2 border-amber-300 rounded-xl p-3 text-center text-xl font-black text-amber-950" */}
+              {/*   /> */}
+              {/* </div> */}
 
               {/* Precio por Kilo */}
               <div>
                 <label className="block text-xs font-black text-amber-900 uppercase mb-1">
-                  Precio por Kilo ($)
+                  Precio ($)
                 </label>
                 <input
                   type="number"
                   step="100"
                   value={precioKilo}
-                  onChange={(e) => setPrecioKilo(e.target.value === "" ? "" : Number(e.target.value))}
+                  onChange={(e) =>
+                    setPrecioKilo(
+                      e.target.value === "" ? "" : Number(e.target.value),
+                    )
+                  }
                   className="w-full bg-white border-2 border-amber-300 rounded-xl p-3 text-center text-xl font-black text-amber-950"
                 />
               </div>
@@ -390,7 +412,11 @@ export function PedidoModal({ pedidoAEditar, onClose }: Props) {
                   type="number"
                   placeholder="Monto total de comida ($)"
                   value={precioManualComida}
-                  onChange={(e) => setPrecioManualComida(e.target.value === "" ? "" : Number(e.target.value))}
+                  onChange={(e) =>
+                    setPrecioManualComida(
+                      e.target.value === "" ? "" : Number(e.target.value),
+                    )
+                  }
                   className="w-full border-2 border-emerald-400 bg-emerald-50 rounded-xl p-2.5 text-base font-black text-emerald-950"
                 />
               </div>
@@ -488,4 +514,3 @@ export function PedidoModal({ pedidoAEditar, onClose }: Props) {
     </div>
   );
 }
-
