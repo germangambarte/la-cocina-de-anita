@@ -38,6 +38,14 @@ export function PedidoModal({ pedidoAEditar, onClose }: Props) {
   const createMutation = useCreatePedido();
   const updateMutation = useUpdatePedido();
 
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, []);
+
   // Cargar datos al editar o al abrir
   useEffect(() => {
     if (pedidoAEditar) {
@@ -155,8 +163,8 @@ export function PedidoModal({ pedidoAEditar, onClose }: Props) {
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-3 z-50 overflow-y-auto">
-      <div className="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-slate-100 my-4">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex overflow-y-auto z-50">
+      <div className="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-slate-100 m-auto my-auto">
         {/* Encabezado del Modal */}
         <div className="flex justify-between items-center mb-4 border-b border-slate-100 pb-3">
           <h2 className="text-xl sm:text-2xl font-black text-slate-800">

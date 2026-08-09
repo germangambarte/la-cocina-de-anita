@@ -26,6 +26,14 @@ export function GastoModal({ gastoAEditar, onClose }: Props) {
   const createGasto = useCreateGasto();
   const updateGasto = useUpdateGasto();
 
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, []);
+
   // Si viene un gasto para editar, cargamos sus valores
   useEffect(() => {
     if (gastoAEditar) {

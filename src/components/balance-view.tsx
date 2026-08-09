@@ -1,6 +1,13 @@
 import { useState } from "react";
 import { useDeleteGasto, useGastos } from "../hooks/useGastos";
-import type { Pedido, Gasto } from "../types/database";
+import {
+  useCajaConfig,
+  useCajaRetiros,
+  useDeleteCajaRetiro,
+} from "../hooks/useCaja";
+import { CajaRetiroModal } from "./caja-retiro-modal";
+import { CajaConfigModal } from "./caja-config-modal";
+import type { Pedido, Gasto, CajaRetiro } from "../types/database";
 
 interface Props {
   pedidos: Pedido[];
@@ -20,6 +27,14 @@ export function BalanceView({ pedidos, onEditGasto }: Props) {
   const deleteGasto = useDeleteGasto();
   const { data: gastos = [], isLoading } = useGastos();
   const [periodo, setPeriodo] = useState<Periodo>("dia");
+
+  // Estado de la Caja de Ganancia
+  const { data: cajaConfig } = useCajaConfig();
+  const { data: retiros = [] } = useCajaRetiros();
+  const deleteRetiro = useDeleteCajaRetiro();
+  const [retiroAEditar, setRetiroAEditar] = useState<CajaRetiro | null>(null);
+  const [showModalRetiro, setShowModalRetiro] = useState(false);
+  const [showModalConfig, setShowModalConfig] = useState(false);
 
   if (isLoading)
     return (
@@ -80,6 +95,56 @@ export function BalanceView({ pedidos, onEditGasto }: Props) {
 
   // 5. Ganancia Neta Real de la Cocina
   const gananciaNetaCocina = ventasNetasLocal - egresosTotales;
+
+  // --- CAJA DE GANANCIA (acumulada desde la fecha de inicio) ---
+  const fechaInicio = cajaConfig?.fecha_inicio;
+  const saldoInicial = Number(cajaConfig?.saldo_inicial || 0);
+
+  const gananciaAcumulada =
+    fechaInicio == null
+      ? 0
+      : pedidos
+          .filter(
+            (p) =>
+              p.metodo_pago !== "pendiente" &&
+              p.created_at.split("T")[0] >= fechaInicio,
+          )
+          .reduce(
+            (acc, p) =>
+              acc + (p.monto_total - (p.es_delivery ? p.costo_delivery : 0)),
+            0,
+          ) -
+        gastos
+          .filter((g) => g.fecha >= fechaInicio)
+          .reduce((acc, g) => acc + g.monto, 0);
+
+  const retirosDesdeInicio = retiros
+    .filter((r) => fechaInicio == null || r.fecha >= fechaInicio)
+    .reduce((acc, r) => acc + r.monto, 0);
+
+  const disponibleCaja =
+    saldoInicial + gananciaAcumulada - retirosDesdeInicio;
+
+  const handleDeleteRetiro = (id: string, concepto: string) => {
+    if (confirm(`¿Eliminar el retiro "${concepto}"?`)) {
+      deleteRetiro.mutate(id);
+    }
+  };
+
+  const handleAbrirNuevoRetiro = () => {
+    setRetiroAEditar(null);
+    setShowModalRetiro(true);
+  };
+
+  const handleAbrirEditarRetiro = (retiro: CajaRetiro) => {
+    setRetiroAEditar(retiro);
+    setShowModalRetiro(true);
+  };
+
+  const handleCerrarModalRetiro = () => {
+    setRetiroAEditar(null);
+    setShowModalRetiro(false);
+  };
 
   const handleDelete = (id: string, concepto: string) => {
     if (confirm(`¿Eliminar el gasto "${concepto}"?`)) {
@@ -173,19 +238,129 @@ export function BalanceView({ pedidos, onEditGasto }: Props) {
         </div>
       </div>
 
-      {/* Tarjeta Informativa de Envíos / Cadetería */}
-      <div className="bg-blue-50 border border-blue-200 p-4 rounded-2xl flex justify-between items-center">
-        <div>
-          <span className="text-xs font-bold text-blue-900 uppercase block">
-            🛵 Recaudación Delivery (Fletes)
-          </span>
-          <span className="text-xs text-blue-700 font-semibold">
-            Dinero correspondiente a envíos (no entra a la caja del local)
-          </span>
-        </div>
-        <span className="text-xl font-black text-blue-950">
-          ${totalFletesDelivery.toLocaleString()}
-        </span>
+      {/* ================= CAJA DE GANANCIA ================= */}
+      <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm">
+        {!cajaConfig ? (
+          <div className="text-center space-y-3 py-4">
+            <div className="text-4xl">💰</div>
+            <h3 className="text-lg font-black text-slate-800">
+              Caja de Ganancia
+            </h3>
+            <p className="text-sm font-bold text-slate-500 leading-relaxed">
+              Acá vas a poder ver cuánta plata de la ganancia tenés disponible
+              para gastar, y registrar cada vez que sacás dinero para uso
+              personal.
+            </p>
+            <button
+              onClick={() => setShowModalConfig(true)}
+              className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-base rounded-2xl cursor-pointer shadow-md active:scale-95"
+            >
+              ▶️ Iniciar la Caja
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="text-base font-black text-slate-800">
+                💰 Caja de Ganancia
+              </h3>
+              <button
+                onClick={() => setShowModalConfig(true)}
+                title="Configurar caja"
+                className="p-2 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-600 text-xs font-bold cursor-pointer"
+              >
+                ⚙️ Configurar
+              </button>
+            </div>
+
+            <div className="bg-slate-900 text-white rounded-2xl p-5 text-center">
+              <span className="text-xs font-bold text-slate-400 uppercase block mb-1">
+                Disponible para Gastar
+              </span>
+              <span className="text-3xl sm:text-4xl font-black">
+                ${disponibleCaja.toLocaleString()}
+              </span>
+              <span className="text-[11px] font-semibold text-slate-400 block mt-2">
+                Desde {fechaInicio} • Arranque: ${saldoInicial.toLocaleString()}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 text-center">
+              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3">
+                <span className="text-[11px] font-bold text-emerald-800 uppercase block">
+                  Ganancia acumulada
+                </span>
+                <span className="text-lg font-black text-emerald-900">
+                  +${gananciaAcumulada.toLocaleString()}
+                </span>
+              </div>
+              <div className="bg-rose-50 border border-rose-200 rounded-xl p-3">
+                <span className="text-[11px] font-bold text-rose-800 uppercase block">
+                  Retirado para gastos
+                </span>
+                <span className="text-lg font-black text-rose-900">
+                  -${retirosDesdeInicio.toLocaleString()}
+                </span>
+              </div>
+            </div>
+
+            <button
+              onClick={handleAbrirNuevoRetiro}
+              className="w-full py-3 bg-amber-600 hover:bg-amber-700 text-white font-black text-base rounded-2xl cursor-pointer shadow-md active:scale-95"
+            >
+              💸 Retirar dinero de la caja
+            </button>
+
+            <div className="divide-y divide-slate-100 border-t border-slate-100 pt-2">
+              {retiros.filter((r) => fechaInicio == null || r.fecha >= fechaInicio)
+                .length === 0 ? (
+                <p className="text-sm font-medium text-slate-400 text-center py-4">
+                  Todavía no sacaste dinero de la caja
+                </p>
+              ) : (
+                retiros
+                  .filter((r) => fechaInicio == null || r.fecha >= fechaInicio)
+                  .map((r) => (
+                    <div
+                      key={r.id}
+                      className="py-3 flex justify-between items-center text-sm"
+                    >
+                      <div>
+                        <span className="font-bold text-slate-800 block">
+                          {r.concepto}
+                        </span>
+                        <span className="text-xs text-slate-400 font-semibold">
+                          {r.fecha}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <span className="font-black text-amber-700 text-base">
+                          -${r.monto.toLocaleString()}
+                        </span>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => handleAbrirEditarRetiro(r)}
+                            title="Editar retiro"
+                            className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-600 text-xs font-bold cursor-pointer"
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            onClick={() => handleDeleteRetiro(r.id, r.concepto)}
+                            title="Eliminar retiro"
+                            className="p-1.5 rounded-lg border border-red-200 hover:bg-red-50 text-red-600 text-xs font-bold cursor-pointer"
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Historial Reciente de Gastos con Botones de Edición */}
@@ -242,6 +417,20 @@ export function BalanceView({ pedidos, onEditGasto }: Props) {
           </div>
         )}
       </div>
+
+      {/* Modales de la Caja */}
+      {showModalRetiro && (
+        <CajaRetiroModal
+          retiroAEditar={retiroAEditar}
+          onClose={handleCerrarModalRetiro}
+        />
+      )}
+      {showModalConfig && (
+        <CajaConfigModal
+          config={cajaConfig}
+          onClose={() => setShowModalConfig(false)}
+        />
+      )}
     </div>
   );
 }

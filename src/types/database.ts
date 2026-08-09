@@ -39,3 +39,24 @@ export interface Gasto {
 }
 
 export type NuevoGasto = Omit<Gasto, "id" | "created_at">;
+
+// ---- Caja de Ganancia ----
+
+export interface CajaConfig {
+  id: string;
+  created_at: string;
+  fecha_inicio: string; // "YYYY-MM-DD"
+  saldo_inicial: number;
+}
+
+export type NuevoCajaConfig = Omit<CajaConfig, "id" | "created_at">;
+
+export interface CajaRetiro {
+  id: string;
+  created_at: string;
+  fecha: string; // "YYYY-MM-DD"
+  concepto: string;
+  monto: number;
+}
+
+export type NuevoCajaRetiro = Omit<CajaRetiro, "id" | "created_at">;
