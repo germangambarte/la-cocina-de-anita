@@ -1,12 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
+import { queryKeys } from '../lib/queryKeys';
 import type { Pedido, NuevoPedido, ActualizarPedido } from '../types/database';
 
 
 // Obtener lista de pedidos
 export function usePedidos() {
   return useQuery<Pedido[]>({
-    queryKey: ['pedidos'],
+    queryKey: queryKeys.pedidos,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('pedidos')
@@ -14,7 +15,7 @@ export function usePedidos() {
         .order('hora_entrega', { ascending: true });
 
       if (error) throw new Error(error.message);
-      return data as Pedido[];
+      return data;
     },
   });
 }
@@ -31,10 +32,10 @@ export function useCreatePedido() {
         .single();
 
       if (error) throw new Error(error.message);
-      return data as Pedido;
+      return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pedidos'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pedidos });
     },
   });
 }
@@ -52,10 +53,10 @@ export function useUpdatePedido() {
         .single();
 
       if (error) throw new Error(error.message);
-      return data as Pedido;
+      return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pedidos'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pedidos });
     },
   });
 }
@@ -69,7 +70,7 @@ export function useDeletePedido() {
       if (error) throw new Error(error.message);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pedidos'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pedidos });
     },
   });
 }

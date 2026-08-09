@@ -1,11 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
+import { queryKeys } from '../lib/queryKeys';
 
 export function useMenuDelDia() {
   const queryClient = useQueryClient();
 
   const query = useQuery({
-    queryKey: ['configuracion', 'menu_del_dia'],
+    queryKey: queryKeys.menuDelDia,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('configuracion')
@@ -27,7 +28,7 @@ export function useMenuDelDia() {
       if (error) throw new Error(error.message);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['configuracion', 'menu_del_dia'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.menuDelDia });
     },
   });
 

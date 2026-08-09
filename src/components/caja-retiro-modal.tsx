@@ -1,5 +1,7 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useCreateCajaRetiro, useUpdateCajaRetiro } from "../hooks/useCaja";
+import { Modal } from "./ui/modal";
+import { getHoyString } from "../lib/date";
 import type { CajaRetiro } from "../types/database";
 
 interface Props {
@@ -7,32 +9,15 @@ interface Props {
   onClose: () => void;
 }
 
-const getLocalDateString = (date: Date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
-
 export function CajaRetiroModal({ retiroAEditar, onClose }: Props) {
   const [concepto, setConcepto] = useState(retiroAEditar?.concepto ?? "");
   const [monto, setMonto] = useState(
     retiroAEditar ? String(retiroAEditar.monto) : "",
   );
-  const [fecha, setFecha] = useState(
-    retiroAEditar?.fecha || getLocalDateString(new Date()),
-  );
+  const [fecha, setFecha] = useState(retiroAEditar?.fecha || getHoyString());
 
   const createMutation = useCreateCajaRetiro();
   const updateMutation = useUpdateCajaRetiro();
-
-  useEffect(() => {
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,22 +58,11 @@ export function CajaRetiroModal({ retiroAEditar, onClose }: Props) {
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex overflow-y-auto z-50">
-      <div className="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-slate-100 m-auto my-auto">
-        <div className="flex justify-between items-center mb-4 border-b border-slate-100 pb-3">
-          <h2 className="text-xl sm:text-2xl font-black text-slate-800">
-            {retiroAEditar ? "✏️ Editar Retiro" : "💸 Retirar de la Caja"}
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-10 h-10 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 font-bold text-lg flex items-center justify-center cursor-pointer"
-          >
-            ✕
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <Modal
+      title={retiroAEditar ? "✏️ Editar Retiro" : "💸 Retirar de la Caja"}
+      onClose={onClose}
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-black text-slate-600 uppercase mb-1">
               ¿Para qué sacaste el dinero?
@@ -148,7 +122,6 @@ export function CajaRetiroModal({ retiroAEditar, onClose }: Props) {
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </Modal>
   );
 }

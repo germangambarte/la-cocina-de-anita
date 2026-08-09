@@ -1,13 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
-import type { Gasto, NuevoGasto } from '../types/database';
-
-export type ActualizarGasto = Partial<Omit<Gasto, 'id' | 'created_at'>>;
+import { queryKeys } from '../lib/queryKeys';
+import type { ActualizarGasto, Gasto, NuevoGasto } from '../types/database';
 
 // Obtener la lista de gastos
 export function useGastos() {
   return useQuery<Gasto[]>({
-    queryKey: ['gastos'],
+    queryKey: queryKeys.gastos,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('gastos')
@@ -15,7 +14,7 @@ export function useGastos() {
         .order('fecha', { ascending: false });
 
       if (error) throw new Error(error.message);
-      return data as Gasto[];
+      return data;
     },
   });
 }
@@ -32,10 +31,10 @@ export function useCreateGasto() {
         .single();
 
       if (error) throw new Error(error.message);
-      return data as Gasto;
+      return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['gastos'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.gastos });
     },
   });
 }
@@ -53,10 +52,10 @@ export function useUpdateGasto() {
         .single();
 
       if (error) throw new Error(error.message);
-      return data as Gasto;
+      return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['gastos'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.gastos });
     },
   });
 }
@@ -70,7 +69,7 @@ export function useDeleteGasto() {
       if (error) throw new Error(error.message);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['gastos'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.gastos });
     },
   });
 }

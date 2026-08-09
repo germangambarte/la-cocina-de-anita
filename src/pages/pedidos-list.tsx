@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { usePedidos, useUpdatePedido } from "../hooks/usePedidos";
 import { PedidoCard } from "../components/pedido-card";
 import { PedidoModal } from "../components/pedido-modal";
@@ -6,13 +6,12 @@ import { GastoModal } from "../components/gasto-modal";
 import { BalanceView } from "../components/balance-view";
 import { useAuth } from "../context/auth-context";
 import type { Pedido, Gasto } from "../types/database";
-import { useMenuDelDia } from "../hooks/useMenuDelDia";
 import { MenuDelDiaInput } from "../components/menu-del-dia-input";
+import { getLocalDateString } from "../lib/date";
+import { buildDeliveryWhatsAppMessage } from "../lib/whatsapp";
 
 export function PedidosList() {
   const { data: pedidos, isLoading, isError } = usePedidos();
-  const { menuDelDia, actualizarMenu } = useMenuDelDia();
-  const [textoMenu, setTextoMenu] = useState(menuDelDia);
   const updateMutation = useUpdatePedido();
   const { logout } = useAuth();
 
@@ -25,34 +24,11 @@ export function PedidosList() {
   const [gastoAEditar, setGastoAEditar] = useState<Gasto | null>(null);
   const [showModalGasto, setShowModalGasto] = useState(false);
 
-  // Sincronizar el input local cuando cambie el menú en la base de datos
-  useEffect(() => {
-    setTextoMenu(menuDelDia);
-  }, [menuDelDia]);
-
-  // Debounce: enviar a Supabase solo tras 600ms de inactividad
-  useEffect(() => {
-    if (textoMenu === menuDelDia) return;
-
-    const timer = setTimeout(() => {
-      actualizarMenu(textoMenu);
-    }, 600);
-
-    return () => clearTimeout(timer);
-  }, [textoMenu, menuDelDia, actualizarMenu]);
-
   const handleUpdate = (
     id: string,
     updates: Parameters<typeof updateMutation.mutate>[0]["updates"],
   ) => {
     updateMutation.mutate({ id, updates });
-  };
-
-  const getLocalDateString = (date: Date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
   };
 
   const hoyStr = getLocalDateString(new Date());
@@ -138,57 +114,15 @@ export function PedidosList() {
   };
 
   const handleEnviarWhatsapp = () => {
-    const pedidosParaWhatsapp =
-      pedidos?.filter(
-        (p) => p.es_delivery && p.metodo_pago === "pendiente",
-      ) || [];
+    const resultado = buildDeliveryWhatsAppMessage(pedidos || []);
 
-    if (pedidosParaWhatsapp.length === 0) {
+    if (!resultado) {
       alert("No hay pedidos de delivery pendientes de cobro para enviar.");
       return;
     }
 
-    const nameCounts = pedidosParaWhatsapp.reduce(
-      (acc, p) => {
-        const name = p.cliente_nombre.trim();
-        acc[name] = (acc[name] || 0) + 1;
-        return acc;
-      },
-      {} as Record<string, number>,
-    );
-
-    const detallePedidos = pedidosParaWhatsapp
-      .map((p) => {
-        const subtotalComida = p.monto_total - p.costo_delivery;
-        const nombreCliente = p.cliente_nombre.trim();
-        let lineaPedido = `- *${nombreCliente}*: $${subtotalComida.toLocaleString()}`;
-
-        if (nameCounts[nombreCliente] > 1) {
-          const fecha = new Date(p.created_at);
-          const fechaFormateada = `(${fecha.getDate().toString().padStart(2, "0")}/${(fecha.getMonth() + 1).toString().padStart(2, "0")})`;
-          lineaPedido += ` ${fechaFormateada}`;
-        }
-        return lineaPedido;
-      })
-      .join("\n");
-
-    const { totalARendir, totalParaDelivery } = pedidosParaWhatsapp.reduce(
-      (acc, p) => {
-        if (!p.delivery_pagado) {
-          acc.totalARendir += p.monto_total - p.costo_delivery;
-          acc.totalParaDelivery += p.costo_delivery;
-        } else {
-          acc.totalARendir += p.monto_total;
-        }
-        return acc;
-      },
-      { totalARendir: 0, totalParaDelivery: 0 },
-    );
-
-    const mensaje = `José, le paso los pagos pendientes:\n\n${detallePedidos}\n\n--------------------------------\n\n*TOTAL COMIDA:* $${totalARendir.toLocaleString()}\n*TOTAL SUYO:* $${totalParaDelivery.toLocaleString()}`;
-
     const urlWhatsapp = `https://api.whatsapp.com/send?text=${encodeURIComponent(
-      mensaje,
+      resultado.mensaje,
     )}`;
     window.open(urlWhatsapp, "_blank");
   };

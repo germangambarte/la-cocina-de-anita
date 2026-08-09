@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useCreateGasto, useUpdateGasto } from '../hooks/useGastos';
 import type { Gasto, CategoriaGasto } from '../types/database';
+import { Modal } from './ui/modal';
 
 interface Props {
   gastoAEditar?: Gasto | null;
@@ -18,31 +19,21 @@ const PRESETS: { label: string; icon: string; categoria: CategoriaGasto }[] = [
 ];
 
 export function GastoModal({ gastoAEditar, onClose }: Props) {
-  const [concepto, setConcepto] = useState('Carnicería / Pollería');
-  const [monto, setMonto] = useState('');
-  const [categoria, setCategoria] = useState<CategoriaGasto>('carnes');
-  const [metodoPago, setMetodoPago] = useState<'efectivo' | 'transferencia'>('efectivo');
+  const [concepto, setConcepto] = useState(
+    gastoAEditar?.concepto ?? 'Carnicería / Pollería',
+  );
+  const [monto, setMonto] = useState(
+    gastoAEditar ? String(gastoAEditar.monto) : '',
+  );
+  const [categoria, setCategoria] = useState<CategoriaGasto>(
+    gastoAEditar?.categoria ?? 'carnes',
+  );
+  const [metodoPago, setMetodoPago] = useState<'efectivo' | 'transferencia'>(
+    gastoAEditar?.metodo_pago ?? 'efectivo',
+  );
 
   const createGasto = useCreateGasto();
   const updateGasto = useUpdateGasto();
-
-  useEffect(() => {
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, []);
-
-  // Si viene un gasto para editar, cargamos sus valores
-  useEffect(() => {
-    if (gastoAEditar) {
-      setConcepto(gastoAEditar.concepto);
-      setMonto(String(gastoAEditar.monto));
-      setCategoria(gastoAEditar.categoria);
-      setMetodoPago(gastoAEditar.metodo_pago);
-    }
-  }, [gastoAEditar]);
 
   const handleSelectPreset = (preset: (typeof PRESETS)[0]) => {
     setConcepto(preset.label);
@@ -88,23 +79,11 @@ export function GastoModal({ gastoAEditar, onClose }: Props) {
   const isPending = createGasto.isPending || updateGasto.isPending;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-3 z-50 overflow-y-auto">
-      <div className="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-slate-100 my-4">
-        {/* Encabezado */}
-        <div className="flex justify-between items-center mb-4 border-b border-slate-100 pb-3">
-          <h2 className="text-xl sm:text-2xl font-black text-slate-800">
-            {gastoAEditar ? '✏️ Editar Gasto' : '💸 Registrar Gasto / Compra'}
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-10 h-10 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 font-bold text-lg flex items-center justify-center cursor-pointer"
-          >
-            ✕
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <Modal
+      title={gastoAEditar ? '✏️ Editar Gasto' : '💸 Registrar Gasto / Compra'}
+      onClose={onClose}
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
           {/* 1. Botones Rápidos de Selección */}
           <div>
             <label className="block text-xs font-black text-slate-600 uppercase mb-2">
@@ -210,8 +189,7 @@ export function GastoModal({ gastoAEditar, onClose }: Props) {
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </Modal>
   );
 }
 

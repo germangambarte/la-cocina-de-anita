@@ -44,11 +44,11 @@ export function PedidoCard({ pedido, onUpdate, onEdit }: Props) {
         </div>
 
         {/* Acciones de Edición/Eliminación */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5">
           <button
             onClick={() => onEdit(pedido)}
             title="Editar pedido"
-            className="w-9 h-9 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-sm flex items-center justify-center cursor-pointer active:scale-95"
+            className="w-11 h-11 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-lg flex items-center justify-center cursor-pointer active:scale-95"
           >
             ✏️
           </button>
@@ -60,7 +60,7 @@ export function PedidoCard({ pedido, onUpdate, onEdit }: Props) {
             }}
             disabled={deleteMutation.isPending}
             title="Eliminar pedido"
-            className="w-9 h-9 rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 font-bold text-sm flex items-center justify-center cursor-pointer active:scale-95"
+            className="w-11 h-11 rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 font-bold text-lg flex items-center justify-center cursor-pointer active:scale-95"
           >
             🗑️
           </button>
@@ -112,7 +112,7 @@ export function PedidoCard({ pedido, onUpdate, onEdit }: Props) {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
         {/* Cobro al Cliente */}
         <div>
-          <label className="block text-[11px] font-black text-slate-500 uppercase mb-1">
+          <label className="block text-xs font-black text-slate-500 uppercase mb-1">
             Pago del Cliente
           </label>
           <select
@@ -120,7 +120,7 @@ export function PedidoCard({ pedido, onUpdate, onEdit }: Props) {
             onChange={(e) =>
               onUpdate(pedido.id, { metodo_pago: e.target.value as MetodoPago })
             }
-            className={`w-full p-2.5 rounded-xl font-black text-sm border-2 cursor-pointer transition ${
+            className={`w-full p-3 rounded-xl font-black text-sm border-2 cursor-pointer transition ${
               pedido.metodo_pago === 'pendiente'
                 ? 'bg-red-50 border-red-300 text-red-700'
                 : pedido.metodo_pago === 'efectivo'
@@ -136,12 +136,12 @@ export function PedidoCard({ pedido, onUpdate, onEdit }: Props) {
 
         {/* Botón Principal de Estado (Entregado / Reabrir) */}
         <div>
-          <label className="block text-[11px] font-black text-slate-500 uppercase mb-1">
+          <label className="block text-xs font-black text-slate-500 uppercase mb-1">
             Estado de la Orden
           </label>
           <button
             onClick={() => onUpdate(pedido.id, { entregado: !pedido.entregado })}
-            className={`w-full p-2.5 rounded-xl font-black text-sm border-2 cursor-pointer transition active:scale-95 ${
+            className={`w-full p-3 rounded-xl font-black text-sm border-2 cursor-pointer transition active:scale-95 ${
               pedido.entregado
                 ? 'bg-slate-200 border-slate-300 text-slate-700 hover:bg-slate-300'
                 : 'bg-emerald-600 border-emerald-700 text-white hover:bg-emerald-700 shadow-xs'

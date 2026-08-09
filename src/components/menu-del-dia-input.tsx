@@ -1,17 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useMenuDelDia } from '../hooks/useMenuDelDia.ts';
 
 export function MenuDelDiaInput() {
   const { menuDelDia, actualizarMenu, isUpdating } = useMenuDelDia();
   const [texto, setTexto] = useState('');
   const [editado, setEditado] = useState(false);
+  const [menuPrevio, setMenuPrevio] = useState(menuDelDia);
 
-  // Inicializar solo cuando se reciben datos por primera vez
-  useEffect(() => {
+  // Si el menú cambia en la base de datos y el usuario no está editando, sincronizar
+  if (menuDelDia !== menuPrevio) {
+    setMenuPrevio(menuDelDia);
     if (!editado) {
       setTexto(menuDelDia);
     }
-  }, [menuDelDia, editado]);
+  }
 
   const handleGuardar = () => {
     actualizarMenu(texto);

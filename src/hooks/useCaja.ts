@@ -1,14 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
+import { queryKeys } from "../lib/queryKeys";
+import type { ActualizarCajaRetiro } from "../lib/database-types";
 import type { CajaConfig, CajaRetiro, NuevoCajaConfig, NuevoCajaRetiro } from "../types/database";
-
-export type ActualizarCajaRetiro = Partial<Omit<CajaRetiro, "id" | "created_at">>;
 
 // --- Configuración de la caja (una sola fila) ---
 
 export function useCajaConfig() {
   return useQuery<CajaConfig | null>({
-    queryKey: ["caja-config"],
+    queryKey: queryKeys.cajaConfig,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("caja_config")
@@ -17,7 +17,7 @@ export function useCajaConfig() {
         .maybeSingle();
 
       if (error) throw new Error(error.message);
-      return (data as CajaConfig) ?? null;
+      return data ?? null;
     },
   });
 }
@@ -40,7 +40,7 @@ export function useSetCajaConfig() {
           .select()
           .single();
         if (error) throw new Error(error.message);
-        return data as CajaConfig;
+        return data;
       }
 
       const { data, error } = await supabase
@@ -49,10 +49,10 @@ export function useSetCajaConfig() {
         .select()
         .single();
       if (error) throw new Error(error.message);
-      return data as CajaConfig;
+      return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["caja-config"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.cajaConfig });
     },
   });
 }
@@ -61,7 +61,7 @@ export function useSetCajaConfig() {
 
 export function useCajaRetiros() {
   return useQuery<CajaRetiro[]>({
-    queryKey: ["caja-retiros"],
+    queryKey: queryKeys.cajaRetiros,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("caja_retiros")
@@ -69,7 +69,7 @@ export function useCajaRetiros() {
         .order("fecha", { ascending: false });
 
       if (error) throw new Error(error.message);
-      return data as CajaRetiro[];
+      return data;
     },
   });
 }
@@ -85,10 +85,10 @@ export function useCreateCajaRetiro() {
         .single();
 
       if (error) throw new Error(error.message);
-      return data as CajaRetiro;
+      return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["caja-retiros"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.cajaRetiros });
     },
   });
 }
@@ -111,10 +111,10 @@ export function useUpdateCajaRetiro() {
         .single();
 
       if (error) throw new Error(error.message);
-      return data as CajaRetiro;
+      return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["caja-retiros"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.cajaRetiros });
     },
   });
 }
@@ -127,7 +127,7 @@ export function useDeleteCajaRetiro() {
       if (error) throw new Error(error.message);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["caja-retiros"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.cajaRetiros });
     },
   });
 }

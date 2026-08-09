@@ -7,6 +7,7 @@ import {
 } from "../hooks/useCaja";
 import { CajaRetiroModal } from "./caja-retiro-modal";
 import { CajaConfigModal } from "./caja-config-modal";
+import { getLocalDateString } from "../lib/date";
 import type { Pedido, Gasto, CajaRetiro } from "../types/database";
 
 interface Props {
@@ -15,13 +16,6 @@ interface Props {
 }
 
 type Periodo = "dia" | "semana" | "mes";
-
-const getLocalDateString = (date: Date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
 
 export function BalanceView({ pedidos, onEditGasto }: Props) {
   const deleteGasto = useDeleteGasto();
@@ -198,7 +192,7 @@ export function BalanceView({ pedidos, onEditGasto }: Props) {
           <span className="text-2xl font-black text-emerald-900">
             ${ventasNetasLocal.toLocaleString()}
           </span>
-          <span className="text-[11px] font-semibold text-emerald-700 block mt-1">
+          <span className="text-xs font-semibold text-emerald-700 block mt-1">
             {pedidosFiltrados.length} pedidos cobrados
           </span>
         </div>
@@ -211,7 +205,7 @@ export function BalanceView({ pedidos, onEditGasto }: Props) {
           <span className="text-2xl font-black text-rose-900">
             ${egresosTotales.toLocaleString()}
           </span>
-          <span className="text-[11px] font-semibold text-rose-700 block mt-1">
+          <span className="text-xs font-semibold text-rose-700 block mt-1">
             {gastosFiltrados.length} compras registradas
           </span>
         </div>
@@ -230,7 +224,7 @@ export function BalanceView({ pedidos, onEditGasto }: Props) {
           <span className="text-2xl font-black">
             ${gananciaNetaCocina.toLocaleString()}
           </span>
-          <span className="text-[11px] font-semibold text-slate-400 block mt-1">
+          <span className="text-xs font-semibold text-slate-400 block mt-1">
             {gananciaNetaCocina >= 0
               ? "Resultado positivo local"
               : "Déficit en el período"}
@@ -267,7 +261,7 @@ export function BalanceView({ pedidos, onEditGasto }: Props) {
               <button
                 onClick={() => setShowModalConfig(true)}
                 title="Configurar caja"
-                className="p-2 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-600 text-xs font-bold cursor-pointer"
+                className="p-2.5 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-600 text-sm font-extrabold cursor-pointer"
               >
                 ⚙️ Configurar
               </button>
@@ -280,14 +274,14 @@ export function BalanceView({ pedidos, onEditGasto }: Props) {
               <span className="text-3xl sm:text-4xl font-black">
                 ${disponibleCaja.toLocaleString()}
               </span>
-              <span className="text-[11px] font-semibold text-slate-400 block mt-2">
+              <span className="text-xs font-semibold text-slate-400 block mt-2">
                 Desde {fechaInicio} • Arranque: ${saldoInicial.toLocaleString()}
               </span>
             </div>
 
             <div className="grid grid-cols-2 gap-3 text-center">
               <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3">
-                <span className="text-[11px] font-bold text-emerald-800 uppercase block">
+                <span className="text-xs font-bold text-emerald-800 uppercase block">
                   Ganancia acumulada
                 </span>
                 <span className="text-lg font-black text-emerald-900">
@@ -295,7 +289,7 @@ export function BalanceView({ pedidos, onEditGasto }: Props) {
                 </span>
               </div>
               <div className="bg-rose-50 border border-rose-200 rounded-xl p-3">
-                <span className="text-[11px] font-bold text-rose-800 uppercase block">
+                <span className="text-xs font-bold text-rose-800 uppercase block">
                   Retirado para gastos
                 </span>
                 <span className="text-lg font-black text-rose-900">
@@ -338,18 +332,18 @@ export function BalanceView({ pedidos, onEditGasto }: Props) {
                         <span className="font-black text-amber-700 text-base">
                           -${r.monto.toLocaleString()}
                         </span>
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1.5">
                           <button
                             onClick={() => handleAbrirEditarRetiro(r)}
                             title="Editar retiro"
-                            className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-600 text-xs font-bold cursor-pointer"
+                            className="w-10 h-10 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-600 text-base font-bold cursor-pointer"
                           >
                             ✏️
                           </button>
                           <button
                             onClick={() => handleDeleteRetiro(r.id, r.concepto)}
                             title="Eliminar retiro"
-                            className="p-1.5 rounded-lg border border-red-200 hover:bg-red-50 text-red-600 text-xs font-bold cursor-pointer"
+                            className="w-10 h-10 rounded-xl border border-red-200 hover:bg-red-50 text-red-600 text-base font-bold cursor-pointer"
                           >
                             🗑️
                           </button>
@@ -395,18 +389,18 @@ export function BalanceView({ pedidos, onEditGasto }: Props) {
                   </span>
 
                   {/* Acciones de Edición/Eliminación */}
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1.5">
                     <button
                       onClick={() => onEditGasto(g)}
                       title="Editar gasto"
-                      className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-600 text-xs font-bold cursor-pointer"
+                      className="w-10 h-10 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-600 text-base font-bold cursor-pointer"
                     >
                       ✏️
                     </button>
                     <button
                       onClick={() => handleDelete(g.id, g.concepto)}
                       title="Eliminar gasto"
-                      className="p-1.5 rounded-lg border border-red-200 hover:bg-red-50 text-red-600 text-xs font-bold cursor-pointer"
+                      className="w-10 h-10 rounded-xl border border-red-200 hover:bg-red-50 text-red-600 text-base font-bold cursor-pointer"
                     >
                       🗑️
                     </button>

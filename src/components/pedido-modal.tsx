@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useCreatePedido, useUpdatePedido } from "../hooks/usePedidos";
 import type { Pedido } from "../types/database";
 import { useMenuDelDia } from "../hooks/useMenuDelDia";
+import { Modal } from "./ui/modal";
 
 interface Props {
   pedidoAEditar?: Pedido | null;
@@ -9,74 +10,62 @@ interface Props {
 }
 
 export function PedidoModal({ pedidoAEditar, onClose }: Props) {
+  const { menuDelDia } = useMenuDelDia();
+
+  const esEdicionVianda =
+    pedidoAEditar != null &&
+    (pedidoAEditar.cantidad_regular > 0 || pedidoAEditar.cantidad_grande > 0);
+
   // Pestaña activa: "vianda" | "kilo"
-  const [tipoTab, setTipoTab] = useState<"vianda" | "kilo">("vianda");
+  const [tipoTab, setTipoTab] = useState<"vianda" | "kilo">(
+    esEdicionVianda ? "vianda" : "kilo",
+  );
 
   // Datos comunes
-  const [cliente, setCliente] = useState("");
-  const [hora, setHora] = useState("12:30");
-  const [esDelivery, setEsDelivery] = useState(false);
-  const [costoDelivery, setCostoDelivery] = useState(3000);
+  const [cliente, setCliente] = useState(pedidoAEditar?.cliente_nombre ?? "");
+  const [hora, setHora] = useState(
+    pedidoAEditar?.hora_entrega.slice(0, 5) ?? "12:30",
+  );
+  const [esDelivery, setEsDelivery] = useState(pedidoAEditar?.es_delivery ?? false);
+  const [costoDelivery, setCostoDelivery] = useState(
+    pedidoAEditar?.costo_delivery ?? 3000,
+  );
 
   // Pestaña 1: Viandas
-  const [menuNombre, setMenuNombre] = useState("");
-  const [cantRegular, setCantRegular] = useState(0);
+  const [menuNombre, setMenuNombre] = useState(
+    esEdicionVianda
+      ? pedidoAEditar?.menu_nombre || "Menú del Día"
+      : menuDelDia || "Menú del Día",
+  );
+  const [cantRegular, setCantRegular] = useState(
+    pedidoAEditar?.cantidad_regular ?? 0,
+  );
   const [precioRegular, setPrecioRegular] = useState<number | "">(4500);
-  const [cantGrande, setCantGrande] = useState(0);
+  const [cantGrande, setCantGrande] = useState(
+    pedidoAEditar?.cantidad_grande ?? 0,
+  );
   const [precioGrande, setPrecioGrande] = useState<number | "">(7000);
 
   // Pestaña 2: Milanesas / Por Kilo
-  const [nombreProductoKilo, setNombreProductoKilo] =
-    useState("Milanesas de Pollo");
+  const [nombreProductoKilo, setNombreProductoKilo] = useState(
+    pedidoAEditar && !esEdicionVianda
+      ? pedidoAEditar.menu_nombre || "Milanesas de Pollo"
+      : "Milanesas de Pollo",
+  );
   const [precioKilo, setPrecioKilo] = useState<number | "">(7000);
 
   // Opción general: Sobrescribir precio final a mano
-  const [usarPrecioManual, setUsarPrecioManual] = useState(false);
-  const [precioManualComida, setPrecioManualComida] = useState<number | "">("");
+  const [usarPrecioManual, setUsarPrecioManual] = useState(
+    pedidoAEditar != null && !esEdicionVianda,
+  );
+  const [precioManualComida, setPrecioManualComida] = useState<number | "">(
+    pedidoAEditar != null && !esEdicionVianda
+      ? pedidoAEditar.monto_total - pedidoAEditar.costo_delivery
+      : "",
+  );
 
-  const { menuDelDia } = useMenuDelDia();
   const createMutation = useCreatePedido();
   const updateMutation = useUpdatePedido();
-
-  useEffect(() => {
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, []);
-
-  // Cargar datos al editar o al abrir
-  useEffect(() => {
-    if (pedidoAEditar) {
-      setCliente(pedidoAEditar.cliente_nombre);
-      setHora(pedidoAEditar.hora_entrega.slice(0, 5));
-      setEsDelivery(pedidoAEditar.es_delivery);
-      setCostoDelivery(pedidoAEditar.costo_delivery);
-
-      if (
-        pedidoAEditar.cantidad_regular > 0 ||
-        pedidoAEditar.cantidad_grande > 0
-      ) {
-        setTipoTab("vianda");
-        setMenuNombre(pedidoAEditar.menu_nombre);
-        setCantRegular(pedidoAEditar.cantidad_regular);
-        setCantGrande(pedidoAEditar.cantidad_grande);
-      } else {
-        setTipoTab("kilo");
-        setNombreProductoKilo(
-          pedidoAEditar.menu_nombre || "Milanesas de Pollo",
-        );
-        setUsarPrecioManual(true);
-        const subtotalComida =
-          pedidoAEditar.monto_total - pedidoAEditar.costo_delivery;
-        setPrecioManualComida(subtotalComida);
-      }
-    } else {
-      const menuGuardado = menuDelDia || "Menú del Día";
-      setMenuNombre(menuGuardado);
-    }
-  }, [pedidoAEditar, menuDelDia]);
 
   // Cálculos automáticos
   const subtotalViandas =
@@ -109,19 +98,12 @@ export function PedidoModal({ pedidoAEditar, onClose }: Props) {
       return;
     }
 
-    let nombreFinal = "";
-    let regFinal = 0;
-    let grandeFinal = 0;
-
-    if (tipoTab === "vianda") {
-      nombreFinal = menuNombre.trim() || "Menú del Día";
-      regFinal = cantRegular;
-      grandeFinal = cantGrande;
-    } else {
-      nombreFinal = `${nombreProductoKilo.trim() || "Milanesas de Pollo"}`;
-      regFinal = 0;
-      grandeFinal = 0;
-    }
+    const esVianda = tipoTab === "vianda";
+    const nombreFinal = esVianda
+      ? menuNombre.trim() || "Menú del Día"
+      : nombreProductoKilo.trim() || "Milanesas de Pollo";
+    const regFinal = esVianda ? cantRegular : 0;
+    const grandeFinal = esVianda ? cantGrande : 0;
 
     if (pedidoAEditar) {
       updateMutation.mutate(
@@ -163,23 +145,11 @@ export function PedidoModal({ pedidoAEditar, onClose }: Props) {
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex overflow-y-auto z-50">
-      <div className="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-slate-100 m-auto my-auto">
-        {/* Encabezado del Modal */}
-        <div className="flex justify-between items-center mb-4 border-b border-slate-100 pb-3">
-          <h2 className="text-xl sm:text-2xl font-black text-slate-800">
-            {pedidoAEditar ? "✏️ Editar Pedido" : "➕ Nuevo Pedido"}
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-10 h-10 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 font-bold text-lg flex items-center justify-center cursor-pointer"
-          >
-            ✕
-          </button>
-        </div>
-
-        {/* 🚀 PESTAÑAS PRINCIPALES: VIANDAS vs MILANESAS */}
+    <Modal
+      title={pedidoAEditar ? "✏️ Editar Pedido" : "➕ Nuevo Pedido"}
+      onClose={onClose}
+    >
+      {/* 🚀 PESTAÑAS PRINCIPALES: VIANDAS vs MILANESAS */}
         <div className="grid grid-cols-2 gap-2 bg-slate-100 p-1.5 rounded-2xl mb-4">
           <button
             type="button"
@@ -518,7 +488,6 @@ export function PedidoModal({ pedidoAEditar, onClose }: Props) {
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </Modal>
   );
 }
