@@ -7,7 +7,7 @@ import {
 } from "../hooks/useCaja";
 import { CajaRetiroModal } from "./caja-retiro-modal";
 import { CajaConfigModal } from "./caja-config-modal";
-import { getLocalDateString } from "../lib/date";
+import { getLocalDateString, formatFechaLegible } from "../lib/date";
 import type { Pedido, Gasto, CajaRetiro } from "../types/database";
 
 interface Props {
@@ -118,6 +118,47 @@ export function BalanceView({ pedidos, onEditGasto }: Props) {
 
   const disponibleCaja =
     saldoInicial + gananciaAcumulada - retirosDesdeInicio;
+
+  // --- HISTORIAL POR DÍA (días anteriores) ---
+  const diasMap = new Map<
+    string,
+    { menus: Set<string>; ventas: number; gastos: number }
+  >();
+
+  for (const p of pedidos) {
+    if (p.metodo_pago === "pendiente") continue;
+    const fecha = p.created_at.split("T")[0];
+    const entry =
+      diasMap.get(fecha) ?? {
+        menus: new Set<string>(),
+        ventas: 0,
+        gastos: 0,
+      };
+    entry.ventas += p.monto_total - (p.es_delivery ? p.costo_delivery : 0);
+    entry.menus.add(p.menu_nombre?.trim() || "Menú del Día");
+    diasMap.set(fecha, entry);
+  }
+
+  for (const g of gastos) {
+    const entry =
+      diasMap.get(g.fecha) ?? {
+        menus: new Set<string>(),
+        ventas: 0,
+        gastos: 0,
+      };
+    entry.gastos += g.monto;
+    diasMap.set(g.fecha, entry);
+  }
+
+  const diasHistorial = [...diasMap.entries()]
+    .map(([fecha, d]) => ({
+      fecha,
+      menus: [...d.menus],
+      gastos: d.gastos,
+      ganancia: d.ventas - d.gastos,
+    }))
+    .sort((a, b) => b.fecha.localeCompare(a.fecha))
+    .slice(0, 30);
 
   const handleDeleteRetiro = (id: string, concepto: string) => {
     if (confirm(`¿Eliminar el retiro "${concepto}"?`)) {
@@ -405,6 +446,65 @@ export function BalanceView({ pedidos, onEditGasto }: Props) {
                       🗑️
                     </button>
                   </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ================= HISTORIAL POR DÍA ================= */}
+      <div className="bg-white p-5 rounded-2xl border border-slate-200 space-y-3">
+        <div>
+          <h3 className="text-base font-bold text-slate-800">
+            📅 Estadísticas por Día
+          </h3>
+          <p className="text-xs font-bold text-slate-400">
+            Menú, gastos y ganancia de cada día (últimos 30 días con datos)
+          </p>
+        </div>
+
+        {diasHistorial.length === 0 ? (
+          <p className="text-sm font-medium text-slate-400 text-center py-6">
+            Todavía no hay días con pedidos cobrados o gastos
+          </p>
+        ) : (
+          <div className="divide-y divide-slate-100">
+            {diasHistorial.map((d) => (
+              <div
+                key={d.fecha}
+                className="py-3 flex justify-between items-center gap-3 text-sm"
+              >
+                <div className="min-w-0">
+                  <span className="font-black text-slate-800 block">
+                    {formatFechaLegible(d.fecha)}
+                  </span>
+                  <span className="text-xs text-slate-500 font-semibold block truncate">
+                    {d.menus.length > 0 ? (
+                      d.menus.slice(0, 2).join(" · ")
+                    ) : (
+                      <span className="text-slate-400">Sin pedidos</span>
+                    )}
+                    {d.menus.length > 2 && (
+                      <span className="text-slate-400">
+                        {" "}
+                        +{d.menus.length - 2} más
+                      </span>
+                    )}
+                  </span>
+                </div>
+
+                <div className="text-right shrink-0">
+                  <span className="block text-xs font-bold text-rose-600">
+                    Gastos: -${d.gastos.toLocaleString()}
+                  </span>
+                  <span
+                    className={`block font-black text-base ${
+                      d.ganancia >= 0 ? "text-emerald-700" : "text-red-700"
+                    }`}
+                  >
+                    Ganancia: ${d.ganancia.toLocaleString()}
+                  </span>
                 </div>
               </div>
             ))}
