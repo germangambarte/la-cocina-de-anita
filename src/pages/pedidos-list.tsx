@@ -7,6 +7,7 @@ import { BalanceView } from "../components/balance-view";
 import { useAuth } from "../context/auth-context";
 import type { Pedido, Gasto } from "../types/database";
 import { MenuDelDiaInput } from "../components/menu-del-dia-input";
+import { PreciosModal } from "../components/precios-modal";
 import { getLocalDateString } from "../lib/date";
 import { buildDeliveryWhatsAppMessage } from "../lib/whatsapp";
 
@@ -16,6 +17,7 @@ export function PedidosList() {
   const { logout } = useAuth();
 
   const [showModalPedido, setShowModalPedido] = useState(false);
+  const [showPrecios, setShowPrecios] = useState(false);
   const [vista, setVista] = useState<"pedidos" | "balance">("pedidos");
   const [tab, setTab] = useState<"pendientes" | "entregados">("pendientes");
   const [pedidoAEditar, setPedidoAEditar] = useState<Pedido | null>(null);
@@ -149,13 +151,22 @@ export function PedidosList() {
             </p>
           </div>
 
-          <button
-            onClick={logout}
-            title="Cerrar sesión"
-            className="p-3 bg-slate-100 hover:bg-slate-200 rounded-2xl text-slate-700 font-extrabold text-base cursor-pointer transition active:scale-95"
-          >
-            🚪 Salir
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowPrecios(true)}
+              title="Cambiar precios de las viandas"
+              className="p-3 bg-slate-100 hover:bg-slate-200 rounded-2xl text-slate-700 font-extrabold text-base cursor-pointer transition active:scale-95"
+            >
+              💲
+            </button>
+            <button
+              onClick={logout}
+              title="Cerrar sesión"
+              className="p-3 bg-slate-100 hover:bg-slate-200 rounded-2xl text-slate-700 font-extrabold text-base cursor-pointer transition active:scale-95"
+            >
+              🚪 Salir
+            </button>
+          </div>
         </div>
 
         {/* 2. BOTÓN PRINCIPAL GIGANTE: NUEVO PEDIDO */}
@@ -295,6 +306,7 @@ export function PedidosList() {
           onClose={handleCerrarModalGasto}
         />
       )}
+      {showPrecios && <PreciosModal onClose={() => setShowPrecios(false)} />}
     </div>
   );
 }

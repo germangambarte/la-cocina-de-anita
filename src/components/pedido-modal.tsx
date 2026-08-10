@@ -2,7 +2,9 @@ import { useState } from "react";
 import { useCreatePedido, useUpdatePedido } from "../hooks/usePedidos";
 import type { Pedido } from "../types/database";
 import { useMenuDelDia } from "../hooks/useMenuDelDia";
+import { useConfiguracion } from "../hooks/useConfiguracion";
 import { Modal } from "./ui/modal";
+import { CLAVES_CONFIG } from "../lib/constantes";
 
 interface Props {
   pedidoAEditar?: Pedido | null;
@@ -11,6 +13,7 @@ interface Props {
 
 export function PedidoModal({ pedidoAEditar, onClose }: Props) {
   const { menuDelDia } = useMenuDelDia();
+  const { getValor } = useConfiguracion();
 
   const esEdicionVianda =
     pedidoAEditar != null &&
@@ -18,7 +21,7 @@ export function PedidoModal({ pedidoAEditar, onClose }: Props) {
 
   // Pestaña activa: "vianda" | "kilo"
   const [tipoTab, setTipoTab] = useState<"vianda" | "kilo">(
-    esEdicionVianda ? "vianda" : "kilo",
+    pedidoAEditar != null && !esEdicionVianda ? "kilo" : "vianda",
   );
 
   // Datos comunes
@@ -40,11 +43,15 @@ export function PedidoModal({ pedidoAEditar, onClose }: Props) {
   const [cantRegular, setCantRegular] = useState(
     pedidoAEditar?.cantidad_regular ?? 0,
   );
-  const [precioRegular, setPrecioRegular] = useState<number | "">(4500);
+  const [precioRegular, setPrecioRegular] = useState<number | "">(
+    Number(getValor(CLAVES_CONFIG.precioRegular, "4500")),
+  );
   const [cantGrande, setCantGrande] = useState(
     pedidoAEditar?.cantidad_grande ?? 0,
   );
-  const [precioGrande, setPrecioGrande] = useState<number | "">(7000);
+  const [precioGrande, setPrecioGrande] = useState<number | "">(
+    Number(getValor(CLAVES_CONFIG.precioGrande, "7000")),
+  );
 
   // Pestaña 2: Milanesas / Por Kilo
   const [nombreProductoKilo, setNombreProductoKilo] = useState(
@@ -218,7 +225,7 @@ export function PedidoModal({ pedidoAEditar, onClose }: Props) {
                     <span>Precio: $</span>
                     <input
                       type="number"
-                      step="100"
+                      step="any"
                       value={precioRegular}
                       onChange={(e) =>
                         setPrecioRegular(
@@ -261,7 +268,7 @@ export function PedidoModal({ pedidoAEditar, onClose }: Props) {
                     <span>Precio: $</span>
                     <input
                       type="number"
-                      step="100"
+                      step="any"
                       value={precioGrande}
                       onChange={(e) =>
                         setPrecioGrande(
@@ -352,7 +359,7 @@ export function PedidoModal({ pedidoAEditar, onClose }: Props) {
                 </label>
                 <input
                   type="number"
-                  step="100"
+                  step="any"
                   value={precioKilo}
                   onChange={(e) =>
                     setPrecioKilo(
@@ -454,7 +461,7 @@ export function PedidoModal({ pedidoAEditar, onClose }: Props) {
                 </span>
                 <input
                   type="number"
-                  step="500"
+                  step="any"
                   value={costoDelivery}
                   onChange={(e) => setCostoDelivery(Number(e.target.value))}
                   className="w-28 bg-white border border-blue-300 rounded-lg p-1.5 text-center font-black text-blue-950 text-base"
