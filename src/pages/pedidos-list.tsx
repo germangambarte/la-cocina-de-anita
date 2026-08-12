@@ -37,7 +37,10 @@ export function PedidosList() {
 
   const [pedidosPendientes, pedidosEntregados] = useMemo(() => {
     const pendientes = (pedidos?.filter((p) => !p.entregado) || []).sort(
-      (a, b) => a.hora_entrega.localeCompare(b.hora_entrega)
+      (a, b) => {
+        if (a.listo !== b.listo) return a.listo ? 1 : -1;
+        return a.hora_entrega.localeCompare(b.hora_entrega);
+      },
     );
 
     const entregados = (

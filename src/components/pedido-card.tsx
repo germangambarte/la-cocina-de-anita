@@ -19,7 +19,9 @@ export function PedidoCard({ pedido, onUpdate, onEdit }: Props) {
   // Estilos según el estado de la tarjeta
   const getCardStyle = () => {
     if (!pedido.entregado) {
-      return 'border-slate-200 bg-white shadow-xs hover:border-amber-400';
+      return pedido.listo
+        ? 'border-emerald-400 bg-emerald-50/70 shadow-sm'
+        : 'border-slate-200 bg-white shadow-xs hover:border-amber-400';
     }
     if (tieneDeuda) {
       return 'border-amber-300 bg-amber-50/40';
@@ -39,6 +41,11 @@ export function PedidoCard({ pedido, onUpdate, onEdit }: Props) {
             <span className="bg-amber-50 text-amber-950 font-extrabold text-xs px-2.5 py-1 rounded-lg border border-amber-200">
               🍲 {pedido.menu_nombre || 'Menú del Día'}
             </span>
+            {pedido.listo && !pedido.entregado && (
+              <span className="bg-emerald-600 text-white font-black text-xs px-2.5 py-1 rounded-lg shadow-xs">
+                ✅ Listo para entregar
+              </span>
+            )}
             <TimeRemainingBadge horaEntrega={pedido.hora_entrega} entregado={pedido.entregado} />
           </div>
         </div>
@@ -107,6 +114,22 @@ export function PedidoCard({ pedido, onUpdate, onEdit }: Props) {
           </span>
         </div>
       </div>
+
+      {/* 3.5 Estado de Preparación (listo para entregar) */}
+      {!pedido.entregado && (
+        <button
+          onClick={() => onUpdate(pedido.id, { listo: !pedido.listo })}
+          className={`w-full p-3 rounded-xl font-black text-sm border-2 cursor-pointer transition active:scale-95 ${
+            pedido.listo
+              ? 'bg-emerald-600 border-emerald-700 text-white hover:bg-emerald-700 shadow-xs'
+              : 'bg-amber-50 border-amber-300 text-amber-900 hover:bg-amber-100'
+          }`}
+        >
+          {pedido.listo
+            ? '✅ LISTO PARA ENTREGAR — DESMARCAR'
+            : '👨‍🍳 MARCAR LISTO PARA ENTREGAR'}
+        </button>
+      )}
 
       {/* 4. Controles de Estado (Pago y Entrega) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">

@@ -13,6 +13,7 @@ export type Pedido = {
   monto_total: number;
   metodo_pago: MetodoPago;
   delivery_pagado: boolean;
+  listo: boolean; // listo para entregar
   entregado: boolean;
 };
 

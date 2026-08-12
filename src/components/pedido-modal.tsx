@@ -142,6 +142,7 @@ export function PedidoModal({ pedidoAEditar, onClose }: Props) {
           monto_total: totalGeneral,
           metodo_pago: "pendiente",
           delivery_pagado: false,
+          listo: false,
           entregado: false,
         },
         { onSuccess: () => onClose() },
