@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Check, AlertTriangle, AlarmClock, Clock } from 'lucide-react';
 
 interface Props {
   horaEntrega: string;
@@ -29,8 +30,8 @@ export function TimeRemainingBadge({ horaEntrega, entregado }: Props) {
 
   if (entregado) {
     return (
-      <span className="bg-slate-200 text-slate-700 text-sm px-3.5 py-1.5 rounded-full font-bold">
-        ✅ Listo
+      <span className="bg-slate-200 text-slate-700 text-sm px-3.5 py-1.5 rounded-full font-bold flex items-center gap-1">
+        <Check className="w-4 h-4" /> Listo
       </span>
     );
   }
@@ -39,23 +40,23 @@ export function TimeRemainingBadge({ horaEntrega, entregado }: Props) {
 
   if (minutesLeft < 0) {
     return (
-      <span className="bg-red-600 text-white text-xs sm:text-sm px-3 py-1 rounded-full font-black shadow-xs">
-        🚨 Demorado {Math.abs(minutesLeft)} min
+      <span className="bg-red-600 text-white text-xs sm:text-sm px-3 py-1 rounded-full font-black shadow-xs flex items-center gap-1">
+        <AlertTriangle className="w-4 h-4" /> Demorado {Math.abs(minutesLeft)} min
       </span>
     );
   }
 
   if (minutesLeft <= 30) {
     return (
-      <span className="bg-amber-400 text-amber-950 text-xs sm:text-sm px-3 py-1 rounded-full font-extrabold shadow-xs">
-        ⏰ Faltan {minutesLeft} min
+      <span className="bg-amber-400 text-amber-950 text-xs sm:text-sm px-3 py-1 rounded-full font-extrabold shadow-xs flex items-center gap-1">
+        <AlarmClock className="w-4 h-4" /> Faltan {minutesLeft} min
       </span>
     );
   }
 
   return (
-    <span className="bg-slate-100 text-slate-700 border border-slate-200 text-xs sm:text-sm px-3 py-1 rounded-full font-bold">
-      ⏳ {horaEntrega.slice(0, 5)} hs
+    <span className="bg-slate-100 text-slate-700 border border-slate-200 text-xs sm:text-sm px-3 py-1 rounded-full font-bold flex items-center gap-1">
+      <Clock className="w-4 h-4" /> {horaEntrega.slice(0, 5)} hs
     </span>
   );
 }

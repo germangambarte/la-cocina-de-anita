@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { UtensilsCrossed, Drumstick, Pencil, Store, Bike, Check } from "lucide-react";
 import { useCreatePedido, useUpdatePedido } from "../hooks/usePedidos";
 import type { Pedido } from "../types/database";
 import { useMenuDelDia } from "../hooks/useMenuDelDia";
@@ -43,14 +44,36 @@ export function PedidoModal({ pedidoAEditar, onClose }: Props) {
   const [cantRegular, setCantRegular] = useState(
     pedidoAEditar?.cantidad_regular ?? 0,
   );
+
+  // Precios por defecto guardados en configuración
+  const precioRegularDefault = Number(
+    getValor(CLAVES_CONFIG.precioRegular, "4500"),
+  );
+  const precioGrandeDefault = Number(
+    getValor(CLAVES_CONFIG.precioGrande, "7000"),
+  );
+
+  // Si el pedido guardado tiene un monto que no coincide con el cálculo de
+  // cantidades × precios, significa que se puso un precio manual.
+  const subtotalComidaGuardado =
+    pedidoAEditar != null
+      ? pedidoAEditar.monto_total - pedidoAEditar.costo_delivery
+      : 0;
+  const subtotalCalculado =
+    (pedidoAEditar?.cantidad_regular ?? 0) * precioRegularDefault +
+    (pedidoAEditar?.cantidad_grande ?? 0) * precioGrandeDefault;
+  const esPrecioManual =
+    pedidoAEditar != null &&
+    (esEdicionVianda ? subtotalComidaGuardado !== subtotalCalculado : true);
+
   const [precioRegular, setPrecioRegular] = useState<number | "">(
-    Number(getValor(CLAVES_CONFIG.precioRegular, "4500")),
+    precioRegularDefault,
   );
   const [cantGrande, setCantGrande] = useState(
     pedidoAEditar?.cantidad_grande ?? 0,
   );
   const [precioGrande, setPrecioGrande] = useState<number | "">(
-    Number(getValor(CLAVES_CONFIG.precioGrande, "7000")),
+    precioGrandeDefault,
   );
 
   // Pestaña 2: Milanesas / Por Kilo
@@ -62,13 +85,9 @@ export function PedidoModal({ pedidoAEditar, onClose }: Props) {
   const [precioKilo, setPrecioKilo] = useState<number | "">(7000);
 
   // Opción general: Sobrescribir precio final a mano
-  const [usarPrecioManual, setUsarPrecioManual] = useState(
-    pedidoAEditar != null && !esEdicionVianda,
-  );
+  const [usarPrecioManual, setUsarPrecioManual] = useState(esPrecioManual);
   const [precioManualComida, setPrecioManualComida] = useState<number | "">(
-    pedidoAEditar != null && !esEdicionVianda
-      ? pedidoAEditar.monto_total - pedidoAEditar.costo_delivery
-      : "",
+    esPrecioManual && pedidoAEditar != null ? subtotalComidaGuardado : "",
   );
 
   const createMutation = useCreatePedido();
@@ -154,10 +173,10 @@ export function PedidoModal({ pedidoAEditar, onClose }: Props) {
 
   return (
     <Modal
-      title={pedidoAEditar ? "✏️ Editar Pedido" : "➕ Nuevo Pedido"}
+      title={pedidoAEditar ? "Editar Pedido" : "Nuevo Pedido"}
       onClose={onClose}
     >
-      {/* 🚀 PESTAÑAS PRINCIPALES: VIANDAS vs MILANESAS */}
+      {/* PESTAÑAS PRINCIPALES: VIANDAS vs MILANESAS */}
         <div className="grid grid-cols-2 gap-2 bg-slate-100 p-1.5 rounded-2xl mb-4">
           <button
             type="button"
@@ -168,7 +187,7 @@ export function PedidoModal({ pedidoAEditar, onClose }: Props) {
                 : "text-slate-600 hover:text-slate-900"
             }`}
           >
-            <span>🍱 Viandas</span>
+            <UtensilsCrossed className="w-5 h-5" /> Viandas
           </button>
 
           <button
@@ -180,7 +199,7 @@ export function PedidoModal({ pedidoAEditar, onClose }: Props) {
                 : "text-slate-600 hover:text-slate-900"
             }`}
           >
-            <span>🍗 Milanesas (x kg)</span>
+            <Drumstick className="w-5 h-5" /> Milanesas (x kg)
           </button>
         </div>
 
@@ -389,7 +408,7 @@ export function PedidoModal({ pedidoAEditar, onClose }: Props) {
                 onChange={(e) => setUsarPrecioManual(e.target.checked)}
                 className="w-4 h-4 rounded text-amber-600 cursor-pointer"
               />
-              ✏️ Poner precio de la comida manualmente
+              <Pencil className="w-4 h-4" /> Poner precio de la comida manualmente
             </label>
 
             {usarPrecioManual && (
@@ -433,24 +452,24 @@ export function PedidoModal({ pedidoAEditar, onClose }: Props) {
                 <button
                   type="button"
                   onClick={() => setEsDelivery(false)}
-                  className={`py-3 px-2 rounded-xl font-extrabold text-xs sm:text-sm border-2 cursor-pointer transition ${
+                  className={`py-3 px-2 rounded-xl font-extrabold text-xs sm:text-sm border-2 cursor-pointer transition flex items-center justify-center gap-2 ${
                     !esDelivery
                       ? "bg-emerald-600 border-emerald-700 text-white shadow-xs"
                       : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
                   }`}
                 >
-                  🏪 Retira en Local
+                  <Store className="w-5 h-5" /> Retira en Local
                 </button>
                 <button
                   type="button"
                   onClick={() => setEsDelivery(true)}
-                  className={`py-3 px-2 rounded-xl font-extrabold text-xs sm:text-sm border-2 cursor-pointer transition ${
+                  className={`py-3 px-2 rounded-xl font-extrabold text-xs sm:text-sm border-2 cursor-pointer transition flex items-center justify-center gap-2 ${
                     esDelivery
                       ? "bg-blue-600 border-blue-700 text-white shadow-xs"
                       : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
                   }`}
                 >
-                  🛵 Con Delivery
+                  <Bike className="w-5 h-5" /> Con Delivery
                 </button>
               </div>
             </div>
@@ -490,9 +509,9 @@ export function PedidoModal({ pedidoAEditar, onClose }: Props) {
             <button
               type="submit"
               disabled={isPending}
-              className="flex-2 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-base font-black disabled:opacity-50 cursor-pointer shadow-md active:scale-95"
+              className="flex-2 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-base font-black disabled:opacity-50 cursor-pointer shadow-md active:scale-95 flex items-center justify-center gap-2"
             >
-              {isPending ? "Guardando..." : "✅ GUARDAR PEDIDO"}
+              {isPending ? "Guardando..." : <><Check className="w-5 h-5" /> GUARDAR PEDIDO</>}
             </button>
           </div>
         </form>

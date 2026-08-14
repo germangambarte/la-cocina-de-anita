@@ -1,4 +1,16 @@
 import { useState } from 'react';
+import {
+  Beef,
+  Carrot,
+  ShoppingCart,
+  Croissant,
+  Package,
+  Flame,
+  HelpCircle,
+  Banknote,
+  Landmark,
+  type LucideIcon,
+} from 'lucide-react';
 import { useCreateGasto, useUpdateGasto } from '../hooks/useGastos';
 import type { Gasto, CategoriaGasto } from '../types/database';
 import { Modal } from './ui/modal';
@@ -8,14 +20,14 @@ interface Props {
   onClose: () => void;
 }
 
-const PRESETS: { label: string; icon: string; categoria: CategoriaGasto }[] = [
-  { label: 'Carnicería / Pollería', icon: '🥩', categoria: 'carnes' },
-  { label: 'Verdulería', icon: '🥬', categoria: 'verduras_hortalizas' },
-  { label: 'Almacén', icon: '🛒', categoria: 'almacen_pan' },
-  { label: 'Panadería', icon: '🍞', categoria: 'almacen_pan' },
-  { label: 'Envases / Descartables', icon: '📦', categoria: 'descartables_envases' },
-  { label: 'Gas / Luz / Servicios', icon: '🔥', categoria: 'servicios_gas_luz' },
-  { label: 'Gastos Varios / Otro', icon: '❓', categoria: 'varios' },
+const PRESETS: { label: string; icon: LucideIcon; categoria: CategoriaGasto }[] = [
+  { label: 'Carnicería / Pollería', icon: Beef, categoria: 'carnes' },
+  { label: 'Verdulería', icon: Carrot, categoria: 'verduras_hortalizas' },
+  { label: 'Almacén', icon: ShoppingCart, categoria: 'almacen_pan' },
+  { label: 'Panadería', icon: Croissant, categoria: 'almacen_pan' },
+  { label: 'Envases / Descartables', icon: Package, categoria: 'descartables_envases' },
+  { label: 'Gas / Luz / Servicios', icon: Flame, categoria: 'servicios_gas_luz' },
+  { label: 'Gastos Varios / Otro', icon: HelpCircle, categoria: 'varios' },
 ];
 
 export function GastoModal({ gastoAEditar, onClose }: Props) {
@@ -80,7 +92,7 @@ export function GastoModal({ gastoAEditar, onClose }: Props) {
 
   return (
     <Modal
-      title={gastoAEditar ? '✏️ Editar Gasto' : '💸 Registrar Gasto / Compra'}
+      title={gastoAEditar ? 'Editar Gasto' : 'Registrar Gasto / Compra'}
       onClose={onClose}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -103,7 +115,9 @@ export function GastoModal({ gastoAEditar, onClose }: Props) {
                         : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
                     }`}
                   >
-                    <span className="text-base sm:text-lg">{p.icon}</span>
+                    <span className="flex items-center justify-center w-8 h-8">
+                      <p.icon className="w-6 h-6" />
+                    </span>
                     <span className="truncate">{p.label}</span>
                   </button>
                 );
@@ -149,24 +163,24 @@ export function GastoModal({ gastoAEditar, onClose }: Props) {
               <button
                 type="button"
                 onClick={() => setMetodoPago('efectivo')}
-                className={`py-3 rounded-xl font-extrabold text-sm border-2 cursor-pointer transition ${
+                className={`py-3 rounded-xl font-extrabold text-sm border-2 cursor-pointer transition flex items-center justify-center gap-2 ${
                   metodoPago === 'efectivo'
                     ? 'bg-emerald-600 border-emerald-700 text-white shadow-xs'
                     : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
                 }`}
               >
-                💵 Efectivo
+                <Banknote className="w-5 h-5" /> Efectivo
               </button>
               <button
                 type="button"
                 onClick={() => setMetodoPago('transferencia')}
-                className={`py-3 rounded-xl font-extrabold text-sm border-2 cursor-pointer transition ${
+                className={`py-3 rounded-xl font-extrabold text-sm border-2 cursor-pointer transition flex items-center justify-center gap-2 ${
                   metodoPago === 'transferencia'
                     ? 'bg-indigo-600 border-indigo-700 text-white shadow-xs'
                     : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
                 }`}
               >
-                🏦 Transferencia
+                <Landmark className="w-5 h-5" /> Transferencia
               </button>
             </div>
           </div>
@@ -183,9 +197,9 @@ export function GastoModal({ gastoAEditar, onClose }: Props) {
             <button
               type="submit"
               disabled={isPending}
-              className="flex-2 py-3 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-base font-black disabled:opacity-50 cursor-pointer shadow-md active:scale-95"
+              className="flex-2 py-3 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-base font-black disabled:opacity-50 cursor-pointer shadow-md active:scale-95 flex items-center justify-center gap-2"
             >
-              {isPending ? 'Guardando...' : '💸 GUARDAR GASTO'}
+              {isPending ? 'Guardando...' : <><Banknote className="w-5 h-5" /> GUARDAR GASTO</>}
             </button>
           </div>
         </form>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Soup, Save } from 'lucide-react';
 import { useMenuDelDia } from '../hooks/useMenuDelDia.ts';
 
 export function MenuDelDiaInput() {
@@ -28,8 +29,8 @@ export function MenuDelDiaInput() {
 
   return (
     <div className="bg-amber-50/70 p-3 rounded-xl border border-amber-200/80 flex flex-wrap items-center gap-2">
-      <span className="text-xs font-black uppercase text-amber-900 tracking-wider">
-        🍲 Menú del Día:
+      <span className="text-xs font-black uppercase text-amber-900 tracking-wider flex items-center gap-1">
+        <Soup className="w-4 h-4" /> Menú del Día:
       </span>
       <input
         type="text"
@@ -47,9 +48,9 @@ export function MenuDelDiaInput() {
         <button
           onClick={handleGuardar}
           disabled={isUpdating}
-          className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-black px-3 py-1.5 rounded-lg transition shadow-xs cursor-pointer active:scale-95"
+          className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-black px-3 py-1.5 rounded-lg transition shadow-xs cursor-pointer active:scale-95 flex items-center gap-1"
         >
-          {isUpdating ? 'Guardando...' : '💾 Guardar'}
+          {isUpdating ? 'Guardando...' : <><Save className="w-3.5 h-3.5" /> Guardar</>}
         </button>
       )}
     </div>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Save } from "lucide-react";
 import { useCreateCajaRetiro, useUpdateCajaRetiro } from "../hooks/useCaja";
 import { Modal } from "./ui/modal";
 import { getHoyString } from "../lib/date";
@@ -59,7 +60,7 @@ export function CajaRetiroModal({ retiroAEditar, onClose }: Props) {
 
   return (
     <Modal
-      title={retiroAEditar ? "✏️ Editar Retiro" : "💸 Retirar de la Caja"}
+      title={retiroAEditar ? "Editar Retiro" : "Retirar de la Caja"}
       onClose={onClose}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -116,9 +117,9 @@ export function CajaRetiroModal({ retiroAEditar, onClose }: Props) {
             <button
               type="submit"
               disabled={isPending}
-              className="flex-2 py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-base font-black disabled:opacity-50 cursor-pointer shadow-md active:scale-95"
+              className="flex-2 py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-base font-black disabled:opacity-50 cursor-pointer shadow-md active:scale-95 flex items-center justify-center gap-2"
             >
-              {isPending ? "Guardando..." : "💾 GUARDAR"}
+              {isPending ? "Guardando..." : <><Save className="w-5 h-5" /> GUARDAR</>}
             </button>
           </div>
         </form>

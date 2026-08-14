@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { UtensilsCrossed, LogIn } from 'lucide-react';
 import { useAuth } from '../context/auth-context';
 import { useNavigate } from 'react-router-dom';
 
@@ -29,7 +30,11 @@ export function Login() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-amber-100 via-slate-50 to-slate-100 p-4">
       <div className="bg-white p-6 sm:p-8 rounded-3xl shadow-2xl max-w-md w-full space-y-5 border border-amber-200">
         <div className="text-center space-y-2">
-          <div className="text-6xl">🍳</div>
+          <div className="flex justify-center">
+            <div className="w-20 h-20 rounded-full bg-amber-100 flex items-center justify-center text-amber-600">
+              <UtensilsCrossed className="w-10 h-10" />
+            </div>
+          </div>
           <h1 className="text-2xl font-black text-slate-800">
             La Cocina de Anita
           </h1>
@@ -75,9 +80,9 @@ export function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-amber-600 text-white font-black text-lg py-3.5 rounded-2xl hover:bg-amber-700 transition disabled:opacity-50 cursor-pointer shadow-md active:scale-95"
+            className="w-full bg-amber-600 text-white font-black text-lg py-3.5 rounded-2xl hover:bg-amber-700 transition disabled:opacity-50 cursor-pointer shadow-md active:scale-95 flex items-center justify-center gap-2"
           >
-            {loading ? 'Ingresando...' : '🔐 ENTRAR'}
+            {loading ? 'Ingresando...' : <><LogIn className="w-5 h-5" /> ENTRAR</>}
           </button>
         </form>
       </div>

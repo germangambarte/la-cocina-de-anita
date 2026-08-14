@@ -1,15 +1,25 @@
 import { useMemo, useState } from "react";
+import { UtensilsCrossed, Scale, PiggyBank, Settings, Plus, Receipt, LogOut, MessageCircle, Check, PartyPopper, Loader2, Clock } from "lucide-react";
 import { usePedidos, useUpdatePedido } from "../hooks/usePedidos";
 import { PedidoCard } from "../components/pedido-card";
 import { PedidoModal } from "../components/pedido-modal";
 import { GastoModal } from "../components/gasto-modal";
 import { BalanceView } from "../components/balance-view";
+import { CajaView } from "../components/caja-view";
+import { ConfiguracionView } from "../components/configuracion-view";
 import { useAuth } from "../context/auth-context";
 import type { Pedido, Gasto } from "../types/database";
-import { MenuDelDiaInput } from "../components/menu-del-dia-input";
-import { PreciosModal } from "../components/precios-modal";
 import { getLocalDateString } from "../lib/date";
 import { buildDeliveryWhatsAppMessage } from "../lib/whatsapp";
+
+type Vista = "pedidos" | "balance" | "caja" | "config";
+
+const NAV_ITEMS: { id: Vista; label: string; icon: typeof UtensilsCrossed }[] = [
+  { id: "pedidos", label: "Pedidos", icon: UtensilsCrossed },
+  { id: "balance", label: "Balance", icon: Scale },
+  { id: "caja", label: "Caja", icon: PiggyBank },
+  { id: "config", label: "Config", icon: Settings },
+];
 
 export function PedidosList() {
   const { data: pedidos, isLoading, isError } = usePedidos();
@@ -17,14 +27,12 @@ export function PedidosList() {
   const { logout } = useAuth();
 
   const [showModalPedido, setShowModalPedido] = useState(false);
-  const [showPrecios, setShowPrecios] = useState(false);
-  const [vista, setVista] = useState<"pedidos" | "balance">("pedidos");
+  const [showModalGasto, setShowModalGasto] = useState(false);
+  const [showFabMenu, setShowFabMenu] = useState(false);
+  const [vista, setVista] = useState<Vista>("pedidos");
   const [tab, setTab] = useState<"pendientes" | "entregados">("pendientes");
   const [pedidoAEditar, setPedidoAEditar] = useState<Pedido | null>(null);
-
-  // Estados para la edicion de gastos:
   const [gastoAEditar, setGastoAEditar] = useState<Gasto | null>(null);
-  const [showModalGasto, setShowModalGasto] = useState(false);
 
   const handleUpdate = (
     id: string,
@@ -73,8 +81,8 @@ export function PedidosList() {
 
   if (isLoading)
     return (
-      <div className="p-12 text-center text-slate-500 font-black text-xl">
-        🍳 Cargando cocina...
+      <div className="p-12 text-center text-slate-500 font-black text-xl flex items-center justify-center gap-2">
+        <Loader2 className="w-6 h-6 animate-spin" /> Cargando cocina...
       </div>
     );
   if (isError)
@@ -83,7 +91,6 @@ export function PedidosList() {
         Error al cargar información.
       </div>
     );
-
 
   const entregadosConDeuda = pedidosEntregados.filter(
     (p) =>
@@ -118,6 +125,16 @@ export function PedidosList() {
     setShowModalGasto(false);
   };
 
+  const handleNuevoPedido = () => {
+    setShowFabMenu(false);
+    setShowModalPedido(true);
+  };
+
+  const handleCargarGasto = () => {
+    setShowFabMenu(false);
+    setShowModalGasto(true);
+  };
+
   const handleEnviarWhatsapp = () => {
     const resultado = buildDeliveryWhatsAppMessage(pedidos || []);
 
@@ -133,13 +150,13 @@ export function PedidosList() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto p-4 space-y-6">
-      {/* 1. Encabezado Limpio y Marquesina */}
+    <div className="max-w-lg mx-auto px-4 pt-4 pb-32 space-y-6">
+      {/* Encabezado */}
       <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 space-y-5">
         <div className="flex justify-between items-center border-b border-slate-100 pb-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-800 tracking-tight">
-              La Cocina de Anita 🍳
+            <h1 className="text-2xl font-black text-slate-800 tracking-tight">
+              La Cocina de Anita
             </h1>
             <p className="text-sm font-bold text-slate-500 mt-1">
               Pendientes:{" "}
@@ -154,93 +171,37 @@ export function PedidosList() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowPrecios(true)}
-              title="Cambiar precios de las viandas"
-              className="p-3 bg-slate-100 hover:bg-slate-200 rounded-2xl text-slate-700 font-extrabold text-base cursor-pointer transition active:scale-95"
-            >
-              💲
-            </button>
-            <button
-              onClick={logout}
-              title="Cerrar sesión"
-              className="p-3 bg-slate-100 hover:bg-slate-200 rounded-2xl text-slate-700 font-extrabold text-base cursor-pointer transition active:scale-95"
-            >
-              🚪 Salir
-            </button>
-          </div>
-        </div>
-
-        {/* 2. BOTÓN PRINCIPAL GIGANTE: NUEVO PEDIDO */}
-        <button
-          onClick={() => setShowModalPedido(true)}
-          className="w-full bg-amber-600 hover:bg-amber-700 text-white font-black text-lg sm:text-xl py-4 px-6 rounded-2xl transition shadow-md cursor-pointer active:scale-98 flex items-center justify-center gap-2"
-        >
-          <span>➕ NUEVO PEDIDO</span>
-        </button>
-
-        {/* 3. Acciones Secundarias Limpias */}
-        <div className="grid grid-cols-2 gap-3 pt-1">
           <button
-            onClick={() => setShowModalGasto(true)}
-            className="bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-800 font-extrabold text-sm py-3 px-3 rounded-2xl transition cursor-pointer flex items-center justify-center gap-2 active:scale-95"
+            onClick={logout}
+            title="Cerrar sesión"
+            className="p-3 bg-slate-100 hover:bg-slate-200 rounded-2xl text-slate-700 font-extrabold text-base cursor-pointer transition active:scale-95 flex items-center gap-1.5"
           >
-            <span>💸 Cargar Gasto</span>
-          </button>
-
-          <button
-            onClick={handleEnviarWhatsapp}
-            className="bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 font-extrabold text-sm py-3 px-3 rounded-2xl transition cursor-pointer flex items-center justify-center gap-2 active:scale-95"
-          >
-            <span>💬 WhatsApp Delivery</span>
+            <LogOut className="w-5 h-5" /> Salir
           </button>
         </div>
 
-        {/* 4. Menú del Día Destacado */}
-        <div className="border-t border-slate-100 pt-4">
-          <MenuDelDiaInput />
-        </div>
-      </div>
-
-      {/* 5. SELECTOR DE VISTA PRINCIPAL (PEDIDOS VS BALANCE) */}
-      <div className="grid grid-cols-2 gap-2 bg-slate-200/80 p-1.5 rounded-2xl">
         <button
-          onClick={() => setVista("pedidos")}
-          className={`py-3 rounded-xl font-black text-base cursor-pointer transition flex items-center justify-center gap-2 ${
-            vista === "pedidos"
-              ? "bg-slate-900 text-white shadow-md"
-              : "text-slate-700 hover:text-slate-900"
-          }`}
+          onClick={handleEnviarWhatsapp}
+          className="w-full bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 font-extrabold text-base py-3.5 px-4 rounded-2xl transition cursor-pointer flex items-center justify-center gap-2 active:scale-95"
         >
-          📋 Pedidos del Día
-        </button>
-        <button
-          onClick={() => setVista("balance")}
-          className={`py-3 rounded-xl font-black text-base cursor-pointer transition flex items-center justify-center gap-2 ${
-            vista === "balance"
-              ? "bg-slate-900 text-white shadow-md"
-              : "text-slate-700 hover:text-slate-900"
-          }`}
-        >
-          📊 Balance y Caja
+          <MessageCircle className="w-5 h-5" />
+          WhatsApp Delivery
         </button>
       </div>
 
-      {/* VISTA 1: PEDIDOS */}
+      {/* VISTA: PEDIDOS */}
       {vista === "pedidos" && (
         <div className="space-y-4">
-          {/* Sub-pestanas: Por Entregar vs Entregados */}
           <div className="grid grid-cols-2 gap-2 bg-white p-1.5 rounded-2xl border border-slate-200">
             <button
               onClick={() => setTab("pendientes")}
-              className={`py-3 rounded-xl font-black text-sm sm:text-base transition cursor-pointer flex items-center justify-center gap-2 ${
+              className={`py-3 rounded-xl font-black text-sm transition cursor-pointer flex items-center justify-center gap-2 ${
                 tab === "pendientes"
                   ? "bg-amber-100 text-amber-950 border border-amber-300"
                   : "text-slate-600 hover:bg-slate-50"
               }`}
             >
-              <span>⏳ Por Entregar</span>
+              <span className="flex items-center gap-2"><Clock className="w-5 h-5" /> Por Entregar</span>
               <span className="text-xs px-2.5 py-0.5 rounded-full font-black bg-amber-600 text-white">
                 {pedidosPendientes.length}
               </span>
@@ -248,13 +209,13 @@ export function PedidosList() {
 
             <button
               onClick={() => setTab("entregados")}
-              className={`py-3 rounded-xl font-black text-sm sm:text-base transition cursor-pointer flex items-center justify-center gap-2 ${
+              className={`py-3 rounded-xl font-black text-sm transition cursor-pointer flex items-center justify-center gap-2 ${
                 tab === "entregados"
                   ? "bg-emerald-100 text-emerald-950 border border-emerald-300"
                   : "text-slate-600 hover:bg-slate-50"
               }`}
             >
-              <span>✅ Entregados</span>
+              <span className="flex items-center gap-2"><Check className="w-5 h-5" /> Entregados</span>
               <span className="text-xs px-2.5 py-0.5 rounded-full font-black bg-emerald-600 text-white">
                 {pedidosEntregados.length}
               </span>
@@ -266,19 +227,24 @@ export function PedidosList() {
             </button>
           </div>
 
-          {/* Lista de Pedidos */}
           <div className="grid gap-4">
             {listaMostrar.length === 0 ? (
               <div className="text-center py-16 text-slate-400 bg-white rounded-3xl border-2 border-dashed border-slate-300 text-lg font-bold">
-                {tab === "pendientes"
-                  ? "¡Excelente Anita! No hay pedidos pendientes 🎉"
-                  : "No hay pedidos marcados como entregados todavía"}
+                {tab === "pendientes" ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <PartyPopper className="w-10 h-10" />
+                    ¡Excelente Anita! No hay pedidos pendientes
+                  </div>
+                ) : (
+                  "No hay pedidos marcados como entregados todavía"
+                )}
               </div>
             ) : (
               listaMostrar.map((pedido) => (
                 <PedidoCard
                   key={pedido.id}
                   pedido={pedido}
+                  isUpdating={updateMutation.isPending}
                   onUpdate={(id, updates) => handleUpdate(id, updates)}
                   onEdit={(p) => handleAbrirEditar(p)}
                 />
@@ -288,13 +254,19 @@ export function PedidosList() {
         </div>
       )}
 
-      {/* VISTA 2: BALANCE Y CAJA */}
+      {/* VISTA: BALANCE */}
       {vista === "balance" && (
         <BalanceView
           pedidos={pedidos || []}
           onEditGasto={(gasto) => handleAbrirEditarGasto(gasto)}
         />
       )}
+
+      {/* VISTA: CAJA */}
+      {vista === "caja" && <CajaView pedidos={pedidos || []} />}
+
+      {/* VISTA: CONFIG */}
+      {vista === "config" && <ConfiguracionView />}
 
       {/* Modales */}
       {showModalPedido && (
@@ -309,7 +281,65 @@ export function PedidosList() {
           onClose={handleCerrarModalGasto}
         />
       )}
-      {showPrecios && <PreciosModal onClose={() => setShowPrecios(false)} />}
+
+      {/* Botón flotante (+) y barra de navegación */}
+      <div className="fixed inset-x-0 bottom-0 z-40">
+        <div className="max-w-lg mx-auto relative">
+          <div className="absolute bottom-16 right-4 flex flex-col items-end gap-3">
+            {showFabMenu && (
+              <div className="flex flex-col items-stretch gap-2 w-48">
+                <button
+                  onClick={handleNuevoPedido}
+                  className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-amber-600 text-white font-black text-sm shadow-lg active:scale-95 cursor-pointer"
+                >
+                  <Plus className="w-5 h-5" /> Agregar Pedido
+                </button>
+                <button
+                  onClick={handleCargarGasto}
+                  className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-rose-600 text-white font-black text-sm shadow-lg active:scale-95 cursor-pointer"
+                >
+                  <Receipt className="w-5 h-5" /> Cargar Gasto
+                </button>
+              </div>
+            )}
+
+            <button
+              onClick={() => setShowFabMenu((v) => !v)}
+              title="Acciones"
+              className="w-14 h-14 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white shadow-xl flex items-center justify-center cursor-pointer active:scale-95 transition"
+            >
+              <Plus
+                className={`w-7 h-7 transition-transform duration-300 ${
+                  showFabMenu ? "rotate-45" : ""
+                }`}
+              />
+            </button>
+          </div>
+        </div>
+
+        <nav className="bg-white border-t border-slate-200 pb-[env(safe-area-inset-bottom)]">
+          <div className="max-w-lg mx-auto grid grid-cols-4">
+            {NAV_ITEMS.map((item) => {
+              const Icon = item.icon;
+              const activo = vista === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setVista(item.id)}
+                  className={`flex flex-col items-center justify-center gap-1 py-2.5 text-[11px] font-black cursor-pointer transition ${
+                    activo
+                      ? "text-amber-600"
+                      : "text-slate-500 hover:text-slate-800"
+                  }`}
+                >
+                  <Icon className={`w-6 h-6 ${activo ? "fill-amber-100" : ""}`} />
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </nav>
+      </div>
     </div>
   );
 }

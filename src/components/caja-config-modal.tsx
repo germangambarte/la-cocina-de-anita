@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Check } from "lucide-react";
 import { useSetCajaConfig } from "../hooks/useCaja";
 import { Modal } from "./ui/modal";
 import { getHoyString } from "../lib/date";
@@ -40,7 +41,7 @@ export function CajaConfigModal({ config, onClose }: Props) {
   };
 
   return (
-    <Modal title="⚙️ Configurar la Caja" onClose={onClose}>
+    <Modal title="Configurar la Caja" onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
           <p className="text-sm font-bold text-slate-500 leading-relaxed">
             La caja suma sola la ganancia (ventas cobradas - gastos de insumos)
@@ -86,9 +87,9 @@ export function CajaConfigModal({ config, onClose }: Props) {
             <button
               type="submit"
               disabled={setConfigMutation.isPending}
-              className="flex-2 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-base font-black disabled:opacity-50 cursor-pointer shadow-md active:scale-95"
+              className="flex-2 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-base font-black disabled:opacity-50 cursor-pointer shadow-md active:scale-95 flex items-center justify-center gap-2"
             >
-              {setConfigMutation.isPending ? "Guardando..." : "✅ INICIAR CAJA"}
+              {setConfigMutation.isPending ? "Guardando..." : <><Check className="w-5 h-5" /> INICIAR CAJA</>}
             </button>
           </div>
         </form>
