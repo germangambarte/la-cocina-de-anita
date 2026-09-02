@@ -1,42 +1,48 @@
 import { useState } from "react";
 import { DollarSign, Check } from "lucide-react";
 import { useConfiguracion } from "../hooks/useConfiguracion";
-import { MenuDelDiaInput } from "./menu-del-dia-input";
 import { CLAVES_CONFIG } from "../lib/constantes";
 
 export function ConfiguracionView() {
   const { getValor, setValor, isUpdating } = useConfiguracion();
-  const [regular, setRegular] = useState(
-    getValor(CLAVES_CONFIG.precioRegular, "4500"),
-  );
-  const [grande, setGrande] = useState(
-    getValor(CLAVES_CONFIG.precioGrande, "7000"),
-  );
+  const regularConfigurado = getValor(CLAVES_CONFIG.precioRegular, "4500");
+  const grandeConfigurado = getValor(CLAVES_CONFIG.precioGrande, "7000");
+  const [regular, setRegular] = useState(regularConfigurado);
+  const [grande, setGrande] = useState(grandeConfigurado);
+  const [regularEditado, setRegularEditado] = useState(false);
+  const [grandeEditado, setGrandeEditado] = useState(false);
   const [guardado, setGuardado] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const regularInput = regularEditado ? regular : regularConfigurado;
+  const grandeInput = grandeEditado ? grande : grandeConfigurado;
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const r = Number(regular) || 0;
-    const g = Number(grande) || 0;
+    const r = Number(regularInput) || 0;
+    const g = Number(grandeInput) || 0;
 
     if (r <= 0 || g <= 0) {
       alert("Por favor ingresá precios mayores a $0.");
       return;
     }
 
-    setValor({ clave: CLAVES_CONFIG.precioRegular, valor: String(r) });
-    setValor({ clave: CLAVES_CONFIG.precioGrande, valor: String(g) });
-    setGuardado(true);
-    window.setTimeout(() => setGuardado(false), 2500);
+    try {
+      await Promise.all([
+        setValor({ clave: CLAVES_CONFIG.precioRegular, valor: String(r) }),
+        setValor({ clave: CLAVES_CONFIG.precioGrande, valor: String(g) }),
+      ]);
+      setRegularEditado(false);
+      setGrandeEditado(false);
+      setGuardado(true);
+      window.setTimeout(() => setGuardado(false), 2500);
+    } catch {
+      alert("No se pudieron guardar los precios. Intentá nuevamente.");
+    }
   };
 
   return (
     <div className="space-y-4">
-      <div className="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm">
-        <MenuDelDiaInput />
-      </div>
-
       <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-4">
       <div>
         <h3 className="text-lg font-black text-slate-800 flex items-center gap-2">
@@ -58,8 +64,11 @@ export function ConfiguracionView() {
             required
             min="1"
             step="any"
-            value={regular}
-            onChange={(e) => setRegular(e.target.value)}
+            value={regularInput}
+            onChange={(e) => {
+              setRegular(e.target.value);
+              setRegularEditado(true);
+            }}
             className="w-full border-2 border-sky-300 bg-sky-50 rounded-2xl p-3 text-center text-2xl font-black text-sky-950 focus:ring-2 focus:ring-sky-500 focus:outline-none"
           />
         </div>
@@ -73,8 +82,11 @@ export function ConfiguracionView() {
             required
             min="1"
             step="any"
-            value={grande}
-            onChange={(e) => setGrande(e.target.value)}
+            value={grandeInput}
+            onChange={(e) => {
+              setGrande(e.target.value);
+              setGrandeEditado(true);
+            }}
             className="w-full border-2 border-orange-300 bg-orange-50 rounded-2xl p-3 text-center text-2xl font-black text-orange-950 focus:ring-2 focus:ring-orange-500 focus:outline-none"
           />
         </div>

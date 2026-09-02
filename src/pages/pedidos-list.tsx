@@ -7,6 +7,7 @@ import { GastoModal } from "../components/gasto-modal";
 import { BalanceView } from "../components/balance-view";
 import { CajaView } from "../components/caja-view";
 import { ConfiguracionView } from "../components/configuracion-view";
+import { MenuDelDiaInput } from "../components/menu-del-dia-input";
 import { useAuth } from "../context/auth-context";
 import type { Pedido, Gasto } from "../types/database";
 import { getLocalDateString } from "../lib/date";
@@ -179,6 +180,8 @@ export function PedidosList() {
             <LogOut className="w-5 h-5" /> Salir
           </button>
         </div>
+
+        <MenuDelDiaInput />
 
         <button
           onClick={handleEnviarWhatsapp}

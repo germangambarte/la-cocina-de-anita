@@ -33,17 +33,32 @@ export function useConfiguracion() {
       clave: string;
       valor: string;
     }) => {
-      const { error } = await supabase.from("configuracion").upsert({ clave, valor });
+      const { error } = await supabase
+        .from("configuracion")
+        .upsert({ clave, valor }, { onConflict: "clave" });
       if (error) throw new Error(error.message);
     },
-    onSuccess: () => {
+    onSuccess: (_, { clave, valor }) => {
+      queryClient.setQueryData<FilaConfiguracion[]>(
+        queryKeys.configuracion,
+        (current) => {
+          const rows = current ?? [];
+          const existingIndex = rows.findIndex((row) => row.clave === clave);
+
+          if (existingIndex === -1) return [...rows, { clave, valor }];
+
+          return rows.map((row, index) =>
+            index === existingIndex ? { clave, valor } : row,
+          );
+        },
+      );
       queryClient.invalidateQueries({ queryKey: queryKeys.configuracion });
     },
   });
 
   return {
     getValor: (clave: string, fallback = "") => valores[clave] ?? fallback,
-    setValor: mutation.mutate,
+    setValor: mutation.mutateAsync,
     isUpdating: mutation.isPending,
     isLoading: query.isLoading,
   };
