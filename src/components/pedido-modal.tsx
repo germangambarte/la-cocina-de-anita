@@ -7,6 +7,8 @@ import { useConfiguracion } from "../hooks/useConfiguracion";
 import { Modal } from "./ui/modal";
 import { CLAVES_CONFIG } from "../lib/constantes";
 
+const COSTO_DELIVERY_DEFAULT = 3000;
+
 interface Props {
   pedidoAEditar?: Pedido | null;
   onClose: () => void;
@@ -31,8 +33,11 @@ export function PedidoModal({ pedidoAEditar, onClose }: Props) {
     pedidoAEditar?.hora_entrega.slice(0, 5) ?? "12:30",
   );
   const [esDelivery, setEsDelivery] = useState(pedidoAEditar?.es_delivery ?? false);
+  const costoDeliveryGuardado = pedidoAEditar?.costo_delivery ?? 0;
   const [costoDelivery, setCostoDelivery] = useState(
-    pedidoAEditar?.costo_delivery ?? 3000,
+    costoDeliveryGuardado > 0
+      ? costoDeliveryGuardado
+      : COSTO_DELIVERY_DEFAULT,
   );
 
   // Pestaña 1: Viandas
@@ -53,18 +58,11 @@ export function PedidoModal({ pedidoAEditar, onClose }: Props) {
     getValor(CLAVES_CONFIG.precioGrande, "7000"),
   );
 
-  // Si el pedido guardado tiene un monto que no coincide con el cálculo de
-  // cantidades × precios, significa que se puso un precio manual.
+  // El subtotal guardado sirve como precio inicial para pedidos por kilo.
   const subtotalComidaGuardado =
     pedidoAEditar != null
       ? pedidoAEditar.monto_total - pedidoAEditar.costo_delivery
       : 0;
-  const subtotalCalculado =
-    (pedidoAEditar?.cantidad_regular ?? 0) * precioRegularDefault +
-    (pedidoAEditar?.cantidad_grande ?? 0) * precioGrandeDefault;
-  const esPrecioManual =
-    pedidoAEditar != null &&
-    (esEdicionVianda ? subtotalComidaGuardado !== subtotalCalculado : true);
 
   const [precioRegular, setPrecioRegular] = useState<number | "">(
     precioRegularDefault,
@@ -82,13 +80,13 @@ export function PedidoModal({ pedidoAEditar, onClose }: Props) {
       ? pedidoAEditar.menu_nombre || "Milanesas de Pollo"
       : "Milanesas de Pollo",
   );
-  const [precioKilo, setPrecioKilo] = useState<number | "">(7000);
+  const [precioKilo, setPrecioKilo] = useState<number | "">(
+    pedidoAEditar && !esEdicionVianda ? subtotalComidaGuardado : 7000,
+  );
 
   // Opción general: Sobrescribir precio final a mano
-  const [usarPrecioManual, setUsarPrecioManual] = useState(esPrecioManual);
-  const [precioManualComida, setPrecioManualComida] = useState<number | "">(
-    esPrecioManual && pedidoAEditar != null ? subtotalComidaGuardado : "",
-  );
+  const [usarPrecioManual, setUsarPrecioManual] = useState(false);
+  const [precioManualComida, setPrecioManualComida] = useState<number | "">("");
 
   const createMutation = useCreatePedido();
   const updateMutation = useUpdatePedido();
@@ -462,7 +460,12 @@ export function PedidoModal({ pedidoAEditar, onClose }: Props) {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setEsDelivery(true)}
+                  onClick={() => {
+                    setEsDelivery(true);
+                    if (Number(costoDelivery) <= 0) {
+                      setCostoDelivery(COSTO_DELIVERY_DEFAULT);
+                    }
+                  }}
                   className={`py-3 px-2 rounded-xl font-extrabold text-xs sm:text-sm border-2 cursor-pointer transition flex items-center justify-center gap-2 ${
                     esDelivery
                       ? "bg-blue-600 border-blue-700 text-white shadow-xs"
