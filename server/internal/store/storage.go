@@ -1,6 +1,9 @@
 package store
 
-import "context"
+import (
+	"context"
+	"database/sql"
+)
 
 type Storage struct {
 	CashConfig     interface{ Create(context.Context) error }
@@ -10,12 +13,12 @@ type Storage struct {
 	Order          interface{ Create(context.Context) error }
 }
 
-func NewStorage() Storage {
+func NewStorage(db *sql.DB) Storage {
 	return Storage{
-		CashConfig:     &CashConfigStore{},
-		CashWithdrawal: &CashConfigStore{},
-		Expense:        &ExpenseStore{},
-		Order:          &OrderStore{},
-		Config:         &ConfigStore{},
+		CashConfig:     &CashConfigStore{db},
+		CashWithdrawal: &CashConfigStore{db},
+		Expense:        &ExpenseStore{db},
+		Order:          &OrderStore{db},
+		Config:         &ConfigStore{db},
 	}
 }

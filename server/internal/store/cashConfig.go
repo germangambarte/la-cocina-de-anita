@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"database/sql"
 	"time"
 	"uuid"
 )
@@ -14,6 +15,7 @@ type CashConfig struct {
 }
 
 type CashConfigStore struct {
+	db *sql.DB
 }
 
 func (s *CashConfigStore) Create(ctx context.Context) error {

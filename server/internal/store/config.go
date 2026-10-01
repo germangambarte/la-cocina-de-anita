@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"database/sql"
 	"time"
 )
 
@@ -12,6 +13,7 @@ type Config struct {
 }
 
 type ConfigStore struct {
+	db *sql.DB
 }
 
 func (s *ConfigStore) Create(ctx context.Context) error {

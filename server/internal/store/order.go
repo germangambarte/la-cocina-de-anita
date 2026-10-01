@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"database/sql"
 	"time"
 	"uuid"
 )
@@ -25,6 +26,7 @@ type Order struct {
 }
 
 type OrderStore struct {
+	db *sql.DB
 }
 
 func (s *OrderStore) Create(ctx context.Context) error {
