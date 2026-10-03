@@ -1,51 +1,74 @@
 package main
 
 import (
-	"cocinadeanita/internal/db"
-	"cocinadeanita/internal/env"
-	"cocinadeanita/internal/store"
+	"cocinadeanita/internal/api/cashBox"
+	cashBoxPostgres "cocinadeanita/internal/api/cashBox/postgres"
+	"cocinadeanita/internal/api/cashWithdrawal"
+	cashWithdrawalPostgres "cocinadeanita/internal/api/cashWithdrawal/postgres"
+	"cocinadeanita/internal/api/config"
+	configPostgres "cocinadeanita/internal/api/config/postgres"
+	"cocinadeanita/internal/api/expense"
+	expensePostgres "cocinadeanita/internal/api/expense/postgres"
+	"cocinadeanita/internal/api/health"
+	"cocinadeanita/internal/api/order"
+	orderPostgres "cocinadeanita/internal/api/order/postgres"
+	"cocinadeanita/internal/database"
+	"cocinadeanita/internal/httpapi"
 	"log"
 )
 
 const version = "0.0.1"
 
 func main() {
-	cfg := config{
-		addr: env.GetString("ADDR", ":8080"),
-		env:  env.GetString("ENV", "development"),
-		db: dbConfig{
-			addr: env.GetString(
-				"DB_ADDR",
-				"postgres://admin:adminpass@localhost/cocinadeanita?sslmode=disable",
-			),
-			maxOpenConns: env.GetInt("DB_MAX_OPEN_CONNS", 30),
-			maxIdleConns: env.GetInt("DB_MAX_IDLE_CONNS", 30),
-			maxIdleTime:  env.GetString("DB_MAX_IDLE_TIME", "15m"),
-		},
-	}
+	cfg := loadConfig()
 
-	db, err := db.New(
+	db, err := database.New(
 		cfg.db.addr,
 		cfg.db.maxOpenConns,
 		cfg.db.maxIdleConns,
 		cfg.db.maxIdleTime,
 	)
-
 	if err != nil {
-		log.Panic(err)
+		log.Fatal(err)
 	}
-
 	defer db.Close()
+
 	log.Println("database connection pool established")
 
-	store := store.NewStorage(db)
+	healthHandler := health.NewHandler(cfg.env, version)
+
+	orderRepository := orderPostgres.NewRepository(db)
+	orderService := order.NewService(orderRepository)
+	orderHandler := order.NewHandler(orderService)
+
+	expenseRepository := expensePostgres.NewRepository(db)
+	expenseService := expense.NewService(expenseRepository)
+	expenseHandler := expense.NewHandler(expenseService)
+
+	configRepository := configPostgres.NewRepository(db)
+	configService := config.NewService(configRepository)
+	configHandler := config.NewHandler(configService)
+
+	cashBoxRepository := cashBoxPostgres.NewRepository(db)
+	cashBoxService := cashBox.NewService(cashBoxRepository)
+	cashBoxHandler := cashBox.NewHandler(cashBoxService)
+
+	cashWithdrawalRepository := cashWithdrawalPostgres.NewRepository(db)
+	cashWithdrawalService := cashWithdrawal.NewService(cashWithdrawalRepository)
+	cashWithdrawalHandler := cashWithdrawal.NewHandler(cashWithdrawalService)
+
+	router := httpapi.NewRouter(
+		healthHandler,
+		orderHandler,
+		expenseHandler,
+		configHandler,
+		cashBoxHandler,
+		cashWithdrawalHandler,
+	)
 
 	app := &application{
 		config: cfg,
-		store:  store,
 	}
 
-	r := app.mount()
-
-	log.Fatal(app.run(r))
+	log.Fatal(app.run(router))
 }
