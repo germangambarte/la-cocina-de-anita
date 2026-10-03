@@ -24,7 +24,7 @@ type Order struct {
 	LargeUnitPrice   float64   `json:"large_unit_price"`
 	FoodSubtotal     float64   `json:"food_subtotal"`
 	HasDelivery      bool      `json:"has_delivery"`
-	DeliveryTime     string    `json:"delivery_time"`
+	DeliveryTime     time.Time `json:"delivery_time"`
 	DeliveryFee      float64   `json:"delivery_fee"`
 	Total            float64   `json:"total_amount"`
 	IsDeliveryPaid   bool      `json:"is_delivery_paid"`
