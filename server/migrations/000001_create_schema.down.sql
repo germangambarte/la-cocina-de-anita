@@ -1,0 +1,5 @@
+DROP TABLE IF EXISTS cash_withdrawals;
+DROP TABLE IF EXISTS cash_boxes;
+DROP TABLE IF EXISTS configs;
+DROP TABLE IF EXISTS expenses;
+DROP TABLE IF EXISTS orders;
