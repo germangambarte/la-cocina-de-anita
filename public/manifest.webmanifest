@@ -5,6 +5,15 @@
   "lang": "es",
   "start_url": "/",
   "scope": "/",
+  "share_target": {
+    "action": "/",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#f8fafc",
