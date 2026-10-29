@@ -114,8 +114,12 @@ export function PedidosList() {
       p.metodo_pago === "pendiente" || (p.es_delivery && !p.delivery_pagado),
   ).length;
 
-  const totalViandasPendientes = pedidosPendientes.reduce(
-    (acc, p) => acc + p.cantidad_regular + p.cantidad_grande,
+  const totalRegularesPendientes = pedidosPendientes.reduce(
+    (acc, p) => acc + p.cantidad_regular,
+    0,
+  );
+  const totalGrandesPendientes = pedidosPendientes.reduce(
+    (acc, p) => acc + p.cantidad_grande,
     0,
   );
   const otrosPedidosPendientes = pedidosPendientes.filter(
@@ -187,13 +191,16 @@ export function PedidosList() {
             <h1 className="text-2xl font-black text-slate-800 tracking-tight">
               La Cocina de Anita
             </h1>
-            <p className="text-sm font-bold text-slate-500 mt-1">
-              Pendientes:{" "}
-              <span className="text-amber-600 font-black">
-                {totalViandasPendientes} viandas
+            <p className="text-sm font-bold text-slate-500 mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
+              <span>Pendientes:</span>
+              <span className="text-sky-600 font-black">
+                {totalRegularesPendientes} regulares
+              </span>
+              <span className="text-orange-600 font-black">
+                {totalGrandesPendientes} grandes
               </span>
               {otrosPedidosPendientes > 0 && (
-                <span className="text-indigo-600 font-black ml-1">
+                <span className="text-indigo-600 font-black">
                   + {otrosPedidosPendientes} por kg
                 </span>
               )}
