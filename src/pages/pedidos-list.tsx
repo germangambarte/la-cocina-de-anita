@@ -1,8 +1,10 @@
 import { useMemo, useState } from "react";
-import { UtensilsCrossed, Scale, PiggyBank, Settings, Plus, Receipt, LogOut, MessageCircle, Check, PartyPopper, Loader2, Clock } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
+import { UtensilsCrossed, Scale, PiggyBank, Settings, Plus, Receipt, LogOut, MessageCircle, Check, PartyPopper, Loader2, Clock, ClipboardPaste } from "lucide-react";
 import { usePedidos, useUpdatePedido } from "../hooks/usePedidos";
 import { PedidoCard } from "../components/pedido-card";
 import { PedidoModal } from "../components/pedido-modal";
+import { ImportarPedidoModal } from "../components/importar-pedido-modal";
 import { GastoModal } from "../components/gasto-modal";
 import { BalanceView } from "../components/balance-view";
 import { CajaView } from "../components/caja-view";
@@ -29,11 +31,25 @@ export function PedidosList() {
 
   const [showModalPedido, setShowModalPedido] = useState(false);
   const [showModalGasto, setShowModalGasto] = useState(false);
+  const [showImportar, setShowImportar] = useState(false);
   const [showFabMenu, setShowFabMenu] = useState(false);
   const [vista, setVista] = useState<Vista>("pedidos");
   const [tab, setTab] = useState<"pendientes" | "entregados">("pendientes");
   const [pedidoAEditar, setPedidoAEditar] = useState<Pedido | null>(null);
   const [gastoAEditar, setGastoAEditar] = useState<Gasto | null>(null);
+
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Si la app se abrió desde "Compartir" de WhatsApp, el mensaje viene en la URL.
+  const textoCompartido = useMemo(
+    () =>
+      [searchParams.get("text"), searchParams.get("url")]
+        .filter(Boolean)
+        .join("\n")
+        .trim(),
+    [searchParams],
+  );
+  const importarVisible = showImportar || textoCompartido.length > 0;
 
   const handleUpdate = (
     id: string,
@@ -134,6 +150,18 @@ export function PedidosList() {
   const handleCargarGasto = () => {
     setShowFabMenu(false);
     setShowModalGasto(true);
+  };
+
+  const handleImportarMensaje = () => {
+    setShowFabMenu(false);
+    setShowImportar(true);
+  };
+
+  const handleCerrarImportar = () => {
+    setShowImportar(false);
+    if (textoCompartido) {
+      setSearchParams({}, { replace: true });
+    }
   };
 
   const handleEnviarWhatsapp = () => {
@@ -284,13 +312,25 @@ export function PedidosList() {
           onClose={handleCerrarModalGasto}
         />
       )}
+      {importarVisible && (
+        <ImportarPedidoModal
+          textoInicial={showImportar ? "" : textoCompartido}
+          onClose={handleCerrarImportar}
+        />
+      )}
 
       {/* Botón flotante (+) y barra de navegación */}
       <div className="fixed inset-x-0 bottom-0 z-40">
         <div className="max-w-lg mx-auto relative">
           <div className="absolute bottom-16 right-4 flex flex-col items-end gap-3">
             {showFabMenu && (
-              <div className="flex flex-col items-stretch gap-2 w-48">
+              <div className="flex flex-col items-stretch gap-2 w-56">
+                <button
+                  onClick={handleImportarMensaje}
+                  className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-teal-600 text-white font-black text-sm shadow-lg active:scale-95 cursor-pointer"
+                >
+                  <ClipboardPaste className="w-5 h-5" /> Importar de WhatsApp
+                </button>
                 <button
                   onClick={handleNuevoPedido}
                   className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-amber-600 text-white font-black text-sm shadow-lg active:scale-95 cursor-pointer"

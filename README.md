@@ -1,78 +1,47 @@
-# React + TypeScript + Vite
+# La Cocina de Anita
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+App de gestión de pedidos, balance, caja y gastos del emprendimiento de viandas.
 
-Currently, two official plugins are available:
+## Importar pedidos desde WhatsApp
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+En la pantalla de Pedidos, tocá el botón **+** → **Importar de WhatsApp** y pegá el mensaje del cliente. La app lo interpreta y arma un borrador editable (cliente, cantidades, hora, delivery y pago) que hay que **confirmar** antes de guardarlo. Nada se carga solo.
 
-## React Compiler
+En Android, si la app está instalada como PWA, también podés mantener presionado un mensaje (o varios) en WhatsApp → **Compartir** → **Cocina Anita**. Se abre con el texto ya interpretado. En iOS no existe "compartir a PWA"; ahí hay que copiar y pegar.
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+La interpretación usa **DeepSeek** a través de una Edge Function de Supabase, así que la API key nunca llega al navegador. Si la función no está desplegada o falla, la app usa un intérprete local como respaldo. La puesta en marcha está en [`supabase/functions/README.md`](supabase/functions/README.md).
 
-Note: This will impact Vite dev & build performances.
+Podés pegar una conversación completa: la IA detecta **varios pedidos** (uno por cliente) y los vas confirmando de a uno. También ignora los mensajes de Anita y no mezcla clientes.
 
-## Expanding the ESLint configuration
+### Clientes habituales
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+La app deduce del historial de pedidos el patrón de cada cliente recurrente: tamaño habitual, hora, si retira o pide delivery, y cómo paga. Si alguien como Morales manda solo "avisame cuando esté listo", la app completa lo que falta y lo muestra como **"completado con su historial"**, para que se sepa qué dijo y qué se dedujo. Esos datos no se inventan: salen de pedidos reales.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+El intérprete local de respaldo entiende, además:
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+- cantidades en números o palabras (`2 comunes y una grande`, `una porción chica`)
+- horas (`12:30`, `a la 1 de la tarde`, `al mediodía`, `13 hs`)
+- delivery o retiro en el local
+- efectivo, transferencia o pago pendiente
+- pedidos por kilo (`1,5 kg de milanesas`)
+- el nombre del encabezado si pegás un chat exportado de un solo cliente
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Siempre revisá la pantalla de confirmación antes de guardar.
 
+## Desarrollo
+
+```bash
+npm install
+npm run dev      # servidor de desarrollo
+npm run build    # build de producción
+npm run lint     # eslint
+npm test         # tests del intérprete de mensajes
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Las variables de entorno van en `.env`:
 
 ```
-# la-cocina-de-anita
+VITE_SUPABASE_URL=...
+VITE_SUPABASE_PUBLISHABLE_KEY=...
+```
+
+La app también tiene un backend en Go en `server/` (en desarrollo) y las definiciones SQL en `supabase/` y `server/migrations/`.

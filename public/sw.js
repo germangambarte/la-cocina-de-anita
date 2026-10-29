@@ -1,5 +1,5 @@
 /* Service Worker - La Cocina de Anita */
-const CACHE_VERSION = "cocina-anita-v1";
+const CACHE_VERSION = "cocina-anita-v2";
 const CACHE_NAME = CACHE_VERSION;
 
 const CORE_ASSETS = [
